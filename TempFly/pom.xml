@@ -81,9 +81,9 @@
         </repository>
 
         <repository>
-            <id>savagelabs</id>
-            <url>https://nexus.savagelabs.net/repository/maven-releases/</url>
-        </repository>
+    	    <id>savagelabs</id>
+    	    <url>https://nexus.savagelabs.net/repository/maven-releases/</url>
+ 	</repository>
 
     </repositories>
 

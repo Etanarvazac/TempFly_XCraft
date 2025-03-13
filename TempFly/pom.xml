@@ -25,10 +25,10 @@
 
     <repositories>
 
-		<repository>
-        	<id>bg-repo</id>
-        	<url>https://repo.bg-software.com/repository/api/</url>
-    	</repository>
+	<repository>
+            <id>bg-repo</id>
+            <url>https://repo.bg-software.com/repository/api/</url>
+        </repository>
 
         <repository>
             <id>spigot-repo</id>
@@ -89,18 +89,18 @@
 
     <dependencies>
 
-		<dependency>
-    		<groupId>mysql</groupId>
-    		<artifactId>mysql-connector-java</artifactId>
-    		<version>8.0.28</version>
-		</dependency>
+	<dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.28</version>
+        </dependency>
 
 
-		<dependency>
-    		<groupId>com.bgsoftware</groupId>
-    		<artifactId>SuperiorSkyblockAPI</artifactId>
-    		<version>1.9.0</version>
-		</dependency>
+	<dependency>
+    	     <groupId>com.bgsoftware</groupId>
+    	     <artifactId>SuperiorSkyblockAPI</artifactId>
+    	     <version>1.9.0</version>
+	</dependency>
 
         <dependency>
             <groupId>org.spigotmc</groupId>

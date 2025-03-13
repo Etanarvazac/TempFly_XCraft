@@ -21,6 +21,12 @@ jobs:
           distribution: 'adopt'
           java-version: '11'
 
+      - name: Generate Gradle wrapper
+        run: gradle wrapper
+
+      - name: Ensure gradlew is now executable
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle
         run: ./gradlew clean build
 

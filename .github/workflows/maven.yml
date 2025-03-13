@@ -5,8 +5,7 @@ name: Maven Package
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "Master" ]
 
 jobs:
   build:

@@ -492,7 +492,6 @@ public class DataBridge implements DataFileHolder {
 			default:
 				return null;
 			}
-			return null;
 		}
 		
 		public String getSqlTable() {

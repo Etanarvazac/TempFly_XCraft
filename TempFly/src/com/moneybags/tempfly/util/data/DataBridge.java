@@ -474,7 +474,6 @@ public class DataBridge implements DataFileHolder {
 	
 	public static enum DataTable {
 		TEMPFLY_DATA("uuid"),
-		ISLAND_SETTINGS;
 		
 		private DataTable() {}
 		
@@ -492,13 +491,6 @@ public class DataBridge implements DataFileHolder {
 			switch (this) {
 			case TEMPFLY_DATA:
 				return tempfly.getDataBridge();
-			case ISLAND_SETTINGS:
-				HookManager hooks = tempfly.getHookManager();
-				TempFlyHook[] hook;
-				if ((hook = hooks.getGenre(Genre.SKYBLOCK)) != null && hook.length > 0) {
-					return (DataFileHolder) hook[0];
-				}
-				break;
 			default:
 				return null;
 			}
@@ -509,8 +501,6 @@ public class DataBridge implements DataFileHolder {
 			switch (this) {
 			case TEMPFLY_DATA:
 				return "tempfly_data";
-			case ISLAND_SETTINGS:
-				//return tempfly.getHookManager().getGenre(Genre.SKYBLOCK)[0].getHookedPlugin() + "_island_settings";
 			default:
 				return null;
 			}
@@ -573,15 +563,6 @@ public class DataBridge implements DataFileHolder {
 				new String[] {"players", "speed"},
 				false),
 		
-		
-		
-		
-		ISLAND_SETTING(
-				DataTable.ISLAND_SETTINGS,
-				Boolean.TYPE,
-				null,
-				new String[] {"islands", "settings"},
-				true);
 		
 		private DataTable table;
 		private Class<?> type;

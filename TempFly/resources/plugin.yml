@@ -1,8 +1,8 @@
 name: TempFly
 main: com.moneybags.tempfly.TempFly
-softdepend: [Factions, ASkyBlock, Essentials, MVdWPlaceholderAPI, PlaceholderAPI, aSkyBlock, Vault, WorldGuard, WorldEdit, IridiumSkyblock, BentoBox, SuperiorSkyblock2]
+softdepend: [Essentials, PlaceholderAPI, Vault, WorldGuard, WorldEdit]
 api-version: 1.13
-version: 3.1.7
+version: 3.1.8
 commands:
     tempfly:
         description: base command

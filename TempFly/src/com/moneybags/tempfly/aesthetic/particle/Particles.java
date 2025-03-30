@@ -42,7 +42,7 @@ public class Particles {
 			Particle particle = null;
 			try {particle = Particle.valueOf(s.toUpperCase());} catch (Exception e1) {
 				try {particle = Particle.valueOf(V.particleType.toUpperCase());} catch (Exception e2) {
-					particle = Particle.VILLAGER_HAPPY;
+					particle = Particle.HAPPY_VILLAGER;
 				};
 			}
 			

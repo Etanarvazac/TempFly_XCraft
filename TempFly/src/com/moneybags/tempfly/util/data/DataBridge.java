@@ -473,9 +473,7 @@ public class DataBridge implements DataFileHolder {
 
 	
 	public static enum DataTable {
-		TEMPFLY_DATA("uuid"),
-		
-		private DataTable() {}
+		TEMPFLY_DATA("uuid");
 		
 		private String primary;
 		
@@ -561,7 +559,7 @@ public class DataBridge implements DataFileHolder {
 				Double.TYPE,
 				"speed",
 				new String[] {"players", "speed"},
-				false),
+				false);
 		
 		
 		private DataTable table;

@@ -54,6 +54,11 @@
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
+		
+		<repository>
+			<id>modrinth-repo</id>
+			<url>https://modrinth.com/plugin/iridiumskyblock/</url>
+		</repository>
 
     </repositories>
 

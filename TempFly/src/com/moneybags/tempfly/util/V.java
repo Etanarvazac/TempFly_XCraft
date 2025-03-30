@@ -349,7 +349,7 @@ public class V {
 		idleThreshold 		= config.getInt("general.idle.threshold");
 		payable				= config.getBoolean("general.time.payable");
 		particles			= config.getBoolean("aesthetic.identifier.particles.enabled");
-		particleType		= config.getString("aesthetic.identifier.particles.type", "VILLAGER_HAPPY");
+		particleType		= config.getString("aesthetic.identifier.particles.type", "HAPPY_VILLAGER");
 		particleDefault		= config.getBoolean("aesthetic.identifier.particles.display_by_default");
 		hideVanish			= config.getBoolean("aesthetic.identifier.particles.hide_vanish");
 		list				= config.getBoolean("aesthetic.identifier.tab_list.enabled");

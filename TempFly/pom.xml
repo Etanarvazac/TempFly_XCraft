@@ -24,13 +24,12 @@
     </build>
 
     <repositories>
-
-		<repository>
+	<repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2</url>
-		</repository>
+	</repository>
 
-		<repository>
+	<repository>
             <id>bg-repo</id>
             <url>https://repo.bg-software.com/repository/api/</url>
         </repository>
@@ -54,17 +53,10 @@
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
-		
-		<repository>
-			<id>modrinth-repo</id>
-			<url>https://modrinth.com/plugin/iridiumskyblock/</url>
-		</repository>
-
     </repositories>
 
     <dependencies>
-
-		<dependency>
+	<dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.32</version>
@@ -106,21 +98,5 @@
             <version>2.11.6</version>
             <scope>provided</scope>
         </dependency>
-
-        <!-- SkyBlock Plugins -->
-
-        <dependency>
-            <groupId>com.iridium</groupId>
-            <artifactId>IridiumSkyblock</artifactId>
-            <version>4.1.0B</version>
-            <scope>provided</scope>
-        </dependency>
-
-		<dependency>
-    	     <groupId>com.bgsoftware</groupId>
-    	     <artifactId>SuperiorSkyblockAPI</artifactId>
-    	     <version>2.0.0</version>
-			 <scope>provided</scope>
-		</dependency>
     </dependencies>
 </project>

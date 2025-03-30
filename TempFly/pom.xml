@@ -25,12 +25,12 @@
 
     <repositories>
 
-		<repository>
+	<repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2</url>
-		</repository>
+	</repository>
 
-		<repository>
+	<repository>
             <id>bg-repo</id>
             <url>https://repo.bg-software.com/repository/api/</url>
         </repository>
@@ -51,35 +51,20 @@
         </repository>
 
         <repository>
-            <id>codemc-repo</id>
-            <url>https://repo.codemc.org/repository/maven-public/</url>
-        </repository>
-
-        <repository>
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
-
-        <repository>
-            <id>factionsuuid</id>
-            <url>https://ci.ender.zone/plugin/repository/everything/</url>
-        </repository>		
 
         <repository>
             <id>sk89q-repo</id>
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
 
-        <repository>
-    	    <id>savagelabs</id>
-    	    <url>https://nexus.savagelabs.net/repository/maven-releases/</url>
-		</repository>
-
     </repositories>
 
     <dependencies>
 
-		<dependency>
+	<dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>9.1.0</version>
@@ -131,27 +116,11 @@
             <scope>provided</scope>
         </dependency>
 
-		<dependency>
-    	     <groupId>com.bgsoftware</groupId>
-    	     <artifactId>SuperiorSkyblockAPI</artifactId>
-    	     <version>2.0.0</version>
-			 <scope>provided</scope>
-		</dependency>
-
-        <dependency>
-            <groupId>world.bentobox</groupId>
-            <artifactId>bentobox</artifactId>
-            <version>3.3.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-		<!-- Factions Plugins -->
-
-        <dependency>
-        	<groupId>com.massivecraft</groupId>
-        	<artifactId>factions</artifactId>
-        	<version>2.14.0</version>
-			<scope>provided</scope>
-        </dependency>
+	<dependency>
+    	    <groupId>com.bgsoftware</groupId>
+    	    <artifactId>SuperiorSkyblockAPI</artifactId>
+    	    <version>2.0.0</version>
+	    <scope>provided</scope>
+	</dependency>
     </dependencies>
 </project>

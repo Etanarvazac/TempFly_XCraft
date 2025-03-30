@@ -57,7 +57,7 @@ public class Particles {
 					loc.getWorld().spawnParticle(particle, loc, 1, 0, 0, 0, 0.1);
 				}
 			} catch (Exception e) {
-				loc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, loc, 1, 0, 0, 0, 0.1);
+				loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 1, 0, 0, 0, 0.1);
 			}
 		} else {
 			Effect particle = null;

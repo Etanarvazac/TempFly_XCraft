@@ -1,6 +1,25 @@
 
+tempfly.*:
+  desc: Grants user all permissions for TempFly.
+  default: op
+  children:
+    tempfly.toggle.*: true
+    tempfly.trails.*: true
+    tempfly.speed.*: true
+    tempfly.time.*: true
+    tempfly.set.*: true
+    tempfly.admin: true
+    tempfly.infinite: true
+
+tempfly.toggle.*:
+  desc: Allows toggling flight for both self and others.
+  children:
+    tempfly.toggle.self: true
+    tempfly.toggle.other: true
+    
 tempfly.toggle.self:
-  desc: Allows user to toggle the use of temp flight.         
+  desc: Allows user to toggle the use of temp flight.
+  default: not-op
   command:
     -/tempfly
     -/fly
@@ -10,6 +29,14 @@ tempfly.toggle.other:
   desc: Allows user to toggle anothers use of temp flight.
   command: /tf toggle [player]
 
+tempfly.speed.*:
+  desc: Allows setting fly speed for self and others. Also grants region and world speed settings.
+  children:
+    tempfly.speed.self: true
+    tempfly.speed.other: true
+    tempfly.speed.region.[region_name].[speed]: true
+    tempfly.speed.world.[world_name].[speed]: true
+    
 tempfly.speed.self:
   desc: Allows user to set their fly speed.
   command: /tf speed [speed]
@@ -24,8 +51,15 @@ tempfly.speed.region.[region_name].[speed]:
 tempfly.speed.world.[world_name].[speed]:
   desc: Define the users max fly speed for a region. goes up to 10. Takes priority over world speed.
 
+tempfly.time.*:
+  desc: Allows viewing remaining fly time for self and others.
+  children:
+    tempfly.time.self: true
+    tempfly.time.other: true
+
 tempfly.time.self:
   desc: Allow user to view thier remaining time.
+  default: not-op
   command: /tf time
 
 tempfly.time.other:
@@ -37,7 +71,16 @@ tempfly.max.[group]:
 
 tempfly.pay:
   desc: Allow user to pay another player time.
+  default: not-op
   command: /tf pay [player]
+
+tempfly.set.*:
+  desc: Allows user to give, remove, and set all fly times.
+  children:
+    tempfly.give: true
+    tempfly.giveall: true
+    tempfly.remove: true
+    tempfly.set: true
 
 tempfly.give:
   desc: Allow user to give time. valid arguments; [s {secs}] [m {mins}] [h {hours}] [d {days}]
@@ -59,17 +102,30 @@ tempfly.reload:
   desc: Reloads the plugins configs and settings.
   command: /tf reload
 
+tempfly.shop:
+  desc: Allow user to open the tempfly shop
+  default: not-op
+  command: /tf shop
+
 tempfly.help:
   desc: Allow user to see the help page.
+  default: not-op
   command: /tf help
 
 tempfly.help.admin:
   desc: Allow user to see the help page with admin commands.
   command: /tf help
 
-tempfly.shop:
-  desc: Allow user to open the tempfly shop
-  command: /tf shop
+tempfly.admin:
+  desc: Grants user all admin commands.
+  children:
+    tempfly.help.admin: true
+    tempfly.reload: true
+    tempfly.bypass: true
+    tempfly.bypass.toggle: true
+    tempfly.infinity.toggle: true
+    tempfly.bonus.[group]: true
+    tempfly.max.[group]: true
 
 tempfly.infinite:
   desc:
@@ -100,6 +156,15 @@ tempfly.bypass.toggle:
 tempfly.trails:
   desc: Allow user access to the praticle trail gui
   command: /tf trails
+
+tempfly.trails.*:
+  desc: Allows users to modifly trails for self and others
+  children:
+    tempfly.trails.remove.self: true
+    tempfly.trails.remove.other: true
+    tempfly.trails.set.self: true
+    tempfly.trails.set.other: true
+    tempfly.trail.[particle]: true
 
 tempfly.trails.remove.self:
   desc: Allow user to remove their trail.

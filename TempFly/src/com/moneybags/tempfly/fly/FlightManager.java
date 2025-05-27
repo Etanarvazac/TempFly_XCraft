@@ -507,10 +507,10 @@ public class FlightManager implements Listener, Reloadable {
 			// Check if they are in a fly-enabled mode
 			if (gm == GameMode.CREATIVE && V.creativeTimer) {
 				// Do nothing. Let the player fly
-				console.debug(e.getPlayer().getUniqueId()); + " was in CREATIVE. Not removing flight.");
+				Console.debug(e.getPlayer().getUniqueId()) + " was in CREATIVE. Not removing flight.");
 			} else if (gm == GameMode.SPECTATOR) {
 				// Do nothing. Let the player fly
-				console.debug(e.getPlayer().getUniqueId()); + " was in SPECTATOR. Not removing flight.");
+				Console.debug(e.getPlayer().getUniqueId()) + " was in SPECTATOR. Not removing flight.");
 			}
 		}
 		// TODO flight cannot just be enforced on every world change as it will break

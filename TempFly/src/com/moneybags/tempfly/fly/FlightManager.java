@@ -449,11 +449,15 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
+		// Let's grab the fly state before checking enabled state.
+		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
 		if (!e.getFrom().getBlock().equals(e.getTo().getBlock())) {
 			updateLocation(user, e.getFrom(), e.getTo(), false, false);
 		}
-		user.applyFlightCorrect();
+		// Restore fly state on teleport (don't want teleport to automatically
+		// start fly timers when the user wasn't already flying)
+		user.applyFlightCorrect(wasFlying);
 	}
 
 	/**
@@ -473,7 +477,9 @@ public class FlightManager implements Listener, Reloadable {
 		// If the user has flight enabled, we need to correct their speed so it doesnt
 		// reset to 1.
 		if (user.hasFlightEnabled()) {
-			user.applyFlightCorrect();
+			// Since user is respawning, we're going to set fly stste to FALSE just
+			// like Vanilla.
+			user.applyFlightCorrect(false);
 			user.applySpeedCorrect(false, 1);
 		}
 		user.enforce(1);
@@ -484,6 +490,8 @@ public class FlightManager implements Listener, Reloadable {
 	 */
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onChangedWorld(PlayerChangedWorldEvent e) {
+		Console.debug("------on world change------", "--|> " + e.getPlayer().getUniqueId());
+		// Verify that we have a player
 		if (!hasUser(e.getPlayer())) {
 			return;
 		}
@@ -491,20 +499,34 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
+		// Let's grab the fly state before checking enabled state.
+		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
 		// The from coordinate really doesn't matter here, just the world.
 		updateLocation(user, new Location(e.getFrom(), 0, 0, 0), user.getPlayer().getLocation(), true, false);
-		// If the user has flight enabled, we need to correct their speed so it doesnt
-		// reset to 1.
+		// If the user has flight enabled, we need to check HOW it's enabled.
 		if (user.hasFlightEnabled()) {
-			user.applyFlightCorrect();
+			// Since it's enabled due to fly command, let's correct their fly speed so
+			// it doesn't get reset to 1 and let's ensure their fly state is unchanged.
+			user.applyFlightCorrect(wasFlying);
 			user.applySpeedCorrect(true, 10);
-
+		} else {
+			// Since their flight was disabled, let's see if was because of their game mode.
+			// We don't want spectators falling into the void, do we?
+			GameMode gm = user.getPlayer().getGameMode();
+			// Check if they are in a fly-enabled mode
+			if (gm == GameMode.CREATIVE && V.creativeTimer) {
+				// Since they were in creative, let's not remove flight.
+				Console.debug("GameMode: " + gm);
+			} else if (gm == GameMode.SPECTATOR) {
+				// Since they were in spectator, let's not give them a 1-way
+				// ticket to the void.
+				Console.debug("GameMode: " + gm);
+			}
 		}
-		// TODO flight cannot just be enforced on every world change as it will break
-		// essentials fly compatibility. Must be enforced
-		// when something happens to actually disable the flight, impossible to check if
-		// it should be disabled here...
+		// TODO flight cannot just be enforced on every world change as it will break Essentials fly 
+		// compatibility. So it must be enforced when something happens to actually disable the flight,
+		// making it impossible to check if it should be disabled here...
 
 		// else if (!user.hasFlightEnabled() && user.getPlayer().getAllowFlight()){
 		// user.enforce(1);
@@ -516,6 +538,7 @@ public class FlightManager implements Listener, Reloadable {
 	 */
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onChangedGamemode(PlayerGameModeChangeEvent e) {
+		Console.debug("------on game mode change------", "--|> " + e.getPlayer().getUniqueId());
 		if (!hasUser(e.getPlayer())) {
 			return;
 		}
@@ -523,8 +546,10 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
+		// Grab current fly state
+		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
-		user.applyFlightCorrect();
+		user.applyFlightCorrect(wasFlying);
 		if (e.getNewGameMode() == GameMode.CREATIVE && V.creativeTimer) {
 			if (!user.hasFlightEnabled() && !user.enableFlight()) {
 				user.enforce(1);

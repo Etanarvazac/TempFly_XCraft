@@ -546,8 +546,10 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
+		// Grab current fly state
+		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
-		user.applyFlightCorrect();
+		user.applyFlightCorrect(wasFlying);
 		if (e.getNewGameMode() == GameMode.CREATIVE && V.creativeTimer) {
 			if (!user.hasFlightEnabled() && !user.enableFlight()) {
 				user.enforce(1);

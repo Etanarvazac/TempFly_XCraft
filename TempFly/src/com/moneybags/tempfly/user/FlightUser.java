@@ -403,12 +403,18 @@ public class FlightUser {
 	/**
 	 * Method to make sure a player can fly when they are supposed to.
 	 */
-	public void applyFlightCorrect() {
+	public void applyFlightCorrect(boolean wasFlying) {
 		Console.debug("------ apply flight correct -------");
 		Bukkit.getScheduler().runTaskLater(manager.getTempFly(), () -> {
 			if (p.isOnline() && hasFlightEnabled()) {
 				p.setAllowFlight(true);
-				p.setFlying(true);
+				// We want to restore fly state if provided by FlightManager. If we
+				// don't get one, default to true.
+				try {
+					p.setFlying(wasFlying);
+				} catch {
+					p.setFlying(true);
+				}
 			}
 		}, 1);
 	}

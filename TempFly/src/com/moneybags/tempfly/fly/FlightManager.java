@@ -485,6 +485,7 @@ public class FlightManager implements Listener, Reloadable {
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onChangedWorld(PlayerChangedWorldEvent e) {
 		Console.debug("------on world change------", "--|> " + e.getPlayer().getUniqueId());
+		// Verify that we have a player
 		if (!hasUser(e.getPlayer())) {
 			return;
 		}
@@ -492,31 +493,35 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
+		// Now let's save their fly state
+		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
 		// The from coordinate really doesn't matter here, just the world.
 		updateLocation(user, new Location(e.getFrom(), 0, 0, 0), user.getPlayer().getLocation(), true, false);
-		// If the user has flight enabled, we need to correct their speed so it doesnt
-		// reset to 1.
+		// If the user has flight enabled, we need to check HOW it's enabled.
 		if (user.hasFlightEnabled()) {
+			// Since it's enabled due to fly command, let's correct their fly speed so
+			// it doesn't get reset to 1. Then we will restore their fly state.
 			user.applyFlightCorrect();
 			user.applySpeedCorrect(true, 10);
+			user.getPlayer().setFlying(wasFlying);
 		} else {
-			// Obtain player's gamemode
+			// Since their flight was disabled, let's see if was because of their game mode.
+			// We don't want spectators falling into the void, do we?
 			GameMode gm = user.getPlayer().getGameMode();
-
 			// Check if they are in a fly-enabled mode
 			if (gm == GameMode.CREATIVE && V.creativeTimer) {
-				// Do nothing. Let the player fly
-				Console.debug(e.getPlayer().getUniqueId() + " was in CREATIVE. Not removing flight.");
+				// Since they were in creative, let's not remove flight.
+				Console.debug("GameMode: " + gm);
 			} else if (gm == GameMode.SPECTATOR) {
-				// Do nothing. Let the player fly
-				Console.debug(e.getPlayer().getUniqueId() + " was in SPECTATOR. Not removing flight.");
+				// Since they were in spectator, let's not give them a 1-way
+				// ticket to the void.
+				Console.debug("GameMode: " + gm);
 			}
 		}
-		// TODO flight cannot just be enforced on every world change as it will break
-		// essentials fly compatibility. Must be enforced
-		// when something happens to actually disable the flight, impossible to check if
-		// it should be disabled here...
+		// TODO flight cannot just be enforced on every world change as it will break Essentials fly 
+		// compatibility. So it must be enforced when something happens to actually disable the flight,
+		// making it impossible to check if it should be disabled here...
 
 		// else if (!user.hasFlightEnabled() && user.getPlayer().getAllowFlight()){
 		// user.enforce(1);
@@ -528,6 +533,7 @@ public class FlightManager implements Listener, Reloadable {
 	 */
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onChangedGamemode(PlayerGameModeChangeEvent e) {
+		Console.debug("------on game mode change------", "--|> " + e.getPlayer().getUniqueId());
 		if (!hasUser(e.getPlayer())) {
 			return;
 		}

@@ -499,10 +499,19 @@ public class FlightManager implements Listener, Reloadable {
 		if (user.hasFlightEnabled()) {
 			user.applyFlightCorrect();
 			user.applySpeedCorrect(true, 10);
-		} else if (!user.hasFlightEnabled() && e.getNewGameMode() == GameMode.Creative && V.creativeTimer) {
-			// Do nothing, let player fly because they are in Creative Mode
-		} else if (!user.hasFlightEnabled() && e.getNewGameMode() == GameMode.SPECTATOR && V.creativeTimer) {
-		        // Do nothing, let player fly because they are in Spectator Mode
+		} else {
+			// Obtain player's gamemode
+			GameMode gm = user.getPlayer().getGameMode();
+
+			// Check if they are in a fly-enabled mode
+			if (gm == GameMode.CREATIVE && V.creativeTimer) {
+				// Do nothing. Let the player fly
+			} else if (gm == GameMode.SPECTATOR) {
+				// Do nothing. Let the player fly
+			} else if (gm == GameMode.SURVIVAL || gm == GameMode.ADVENTURE) {
+				// They shouldn't be flying in this case. Let's fix that.
+				user.enforce(1);
+			}
 		}
 		// TODO flight cannot just be enforced on every world change as it will break
 		// essentials fly compatibility. Must be enforced

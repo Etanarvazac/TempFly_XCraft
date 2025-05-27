@@ -484,6 +484,7 @@ public class FlightManager implements Listener, Reloadable {
 	 */
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onChangedWorld(PlayerChangedWorldEvent e) {
+		Console.debug("------on world change------", "--|> " + e.getPlayer().getUniqueId());
 		if (!hasUser(e.getPlayer())) {
 			return;
 		}
@@ -506,11 +507,10 @@ public class FlightManager implements Listener, Reloadable {
 			// Check if they are in a fly-enabled mode
 			if (gm == GameMode.CREATIVE && V.creativeTimer) {
 				// Do nothing. Let the player fly
+				console.debug(e.getPlayer().getUniqueId()); + " was in CREATIVE. Not removing flight.");
 			} else if (gm == GameMode.SPECTATOR) {
 				// Do nothing. Let the player fly
-			} else if (gm == GameMode.SURVIVAL || gm == GameMode.ADVENTURE) {
-				// They shouldn't be flying in this case. Let's fix that.
-				user.enforce(1);
+				console.debug(e.getPlayer().getUniqueId()); + " was in SPECTATOR. Not removing flight.");
 			}
 		}
 		// TODO flight cannot just be enforced on every world change as it will break

@@ -410,11 +410,7 @@ public class FlightUser {
 				p.setAllowFlight(true);
 				// We want to restore fly state if provided by FlightManager. If we
 				// don't get one, default to true.
-				try {
-					p.setFlying(wasFlying);
-				} catch (exception e) {
-					p.setFlying(true);
-				}
+				p.setFlying(wasFlying);
 			}
 		}, 1);
 	}

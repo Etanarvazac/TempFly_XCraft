@@ -412,7 +412,7 @@ public class FlightUser {
 				// don't get one, default to true.
 				try {
 					p.setFlying(wasFlying);
-				} catch {
+				} catch (exception e) {
 					p.setFlying(true);
 				}
 			}

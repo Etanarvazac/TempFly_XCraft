@@ -493,8 +493,6 @@ public class FlightManager implements Listener, Reloadable {
 		if (user == null) {
 			return;
 		}
-		// Now let's save their fly state
-		boolean wasFlying = user.getPlayer().isFlying();
 		user.resetIdleTimer();
 		// The from coordinate really doesn't matter here, just the world.
 		updateLocation(user, new Location(e.getFrom(), 0, 0, 0), user.getPlayer().getLocation(), true, false);
@@ -504,7 +502,6 @@ public class FlightManager implements Listener, Reloadable {
 			// it doesn't get reset to 1. Then we will restore their fly state.
 			user.applyFlightCorrect();
 			user.applySpeedCorrect(true, 10);
-			user.getPlayer().setFlying(wasFlying);
 		} else {
 			// Since their flight was disabled, let's see if was because of their game mode.
 			// We don't want spectators falling into the void, do we?

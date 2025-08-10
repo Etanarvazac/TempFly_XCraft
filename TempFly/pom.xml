@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-bukkit</artifactId>
-            <version>7.3.16</version>
+            <version>7.3.11</version>
             <scope>provided</scope>
         </dependency>
 
@@ -100,4 +100,5 @@
         </dependency>
     </dependencies>
 </project>
+
 

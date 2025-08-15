@@ -33,26 +33,41 @@ public class Particles {
 	}
 	
 	public static boolean oldParticles() {
-		String version = Bukkit.getVersion();
-		return (version.contains("1.6")) || (version.contains("1.7")) || (version.contains("1.8")) || version.contains("1.9");
+		String version = Bukkit.getBukkitVersion(); // Obtain the current version number
+		String[] parts = version.split(".");
+		try {
+			int major = Integer.parseInt(parts[0]);
+			int minor = Integer.parseInt(parts[1]);
+			return major == 1 && minor <= 12;
+		} catch (Exception e) {
+			return true;
+		}
 	}
 	
 	public static void play(Location loc, String s) {
 		if (!oldParticles) {
-			Particle particle = null;
-			try {particle = Particle.valueOf(s.toUpperCase());} catch (Exception e1) {
-				try {particle = Particle.valueOf(V.particleType.toUpperCase());} catch (Exception e2) {
-					particle = Particle.HAPPY_VILLAGER;
-				};
-			}
-			
-			Class<?> c = particle.getDataType();
+			Particle particle;
 			try {
-				if (dustOptions != null && dustOptions.equals(c)) {
+				particle = Particle.valueOf(s.toUpperCase());
+			} catch (Exception e1) {
+				try {
+					particle = Particle.valueOf(V.particleType.toUpperCase());
+				} catch (Exception e2) {
+					particle = Particle.HAPPY_VILLAGER;
+				}
+			}
+			try {
+				Class<?> datatype = particle.getDataType();
+				
+				
+				if (dustOptions != null && dustOptions.equals(datatype)) {
 					Random rand = new Random();
-					loc.getWorld().spawnParticle(particle, loc, 1, new DustOptions(Color.fromRGB(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), 2f));	
-				} else if (blockData != null && blockData.equals(c)) {
-					loc.getWorld().spawnParticle(particle, loc, 1, Material.STONE.createBlockData());	
+					DustOptions dust = new DustOptions(
+							Color.fromRGB(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)), 2f
+					);
+					loc.getWorld().spawnParticle(particle,  loc, 1, dust);
+				} else if (blockData != null && blockData.equals(datatype)) {
+					loc.getWorld().spawnParticle(particle, loc, 1, Material.STONE.createBlockData());
 				} else {
 					loc.getWorld().spawnParticle(particle, loc, 1, 0, 0, 0, 0.1);
 				}
@@ -60,17 +75,22 @@ public class Particles {
 				loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 1, 0, 0, 0, 0.1);
 			}
 		} else {
-			Effect particle = null;
-			// This effect value crashes clients and prevents them from joining the server again.
-			if (s != null && s.equalsIgnoreCase("ITEM_BREAK")) {
+			if("ITEM_BREAK".equalsIgnoreCase(s)) {
 				s = "HAPPY_VILLAGER";
 			}
-			try {particle = Effect.valueOf(s.toUpperCase());} catch (Exception e1) {
-				try {particle = Effect.valueOf(V.particleType);} catch (Exception e2) {
-					particle = Effect.valueOf("HAPPY_VILLAGER");	
+			
+			Effect effect;
+			try {
+				effect = Effect.valueOf(s.toUpperCase());
+			} catch (Exception e1) {
+				try {
+					effect = Effect.valueOf(V.particleType.toUpperCase());
+				} catch (Exception e2) {
+					effect = Effect.SMOKE;
 				}
 			}
-			loc.getWorld().playEffect(loc, particle, 1);
+			
+			loc.getWorld().playEffect(loc, effect, 1);
 		}
 	}
 	
@@ -97,3 +117,4 @@ public class Particles {
 	}
 	
 }
+

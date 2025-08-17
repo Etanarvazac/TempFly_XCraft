@@ -2,8 +2,6 @@ package com.moneybags.tempfly.hook;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -244,3 +242,4 @@ public abstract class TempFlyHook implements RequirementProvider, Reloadable, Da
 		return null;
 	}
 }
+

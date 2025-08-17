@@ -337,7 +337,7 @@ public class Metrics {
         if (logSentData) {
             plugin.getLogger().info("Sending data to bStats: " + data);
         }
-		URI uri = URI.create(URL)
+		URI uri = URI.create(URL);
         HttpsURLConnection connection = (HttpsURLConnection) uri.toURL().openConnection();
 
         // Compress the data to save bandwidth
@@ -721,3 +721,4 @@ public class Metrics {
 
 
 }
+

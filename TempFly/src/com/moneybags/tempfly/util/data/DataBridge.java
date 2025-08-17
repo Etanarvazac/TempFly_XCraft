@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,9 +28,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.moneybags.tempfly.TempFly;
-import com.moneybags.tempfly.hook.TempFlyHook;
-import com.moneybags.tempfly.hook.HookManager;
-import com.moneybags.tempfly.hook.HookManager.Genre;
 import com.moneybags.tempfly.util.Console;
 import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
@@ -669,3 +665,4 @@ public class DataBridge implements DataFileHolder {
 	}
 
 }
+

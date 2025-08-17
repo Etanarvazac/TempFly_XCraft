@@ -289,7 +289,7 @@ public class Metrics {
                                     Method jsonStringGetter = jsonObjectJsonSimple.getDeclaredMethod("toJSONString");
                                     jsonStringGetter.setAccessible(true);
                                     String jsonString = (String) jsonStringGetter.invoke(plugin);
-                                    JsonObject object = new JsonParser.parseString(jsonString).getAsJsonObject();
+                                    JsonObject object = JsonParser.parseString(jsonString).getAsJsonObject();
                                     pluginData.add(object);
                                 }
                             } catch (ClassNotFoundException e) {
@@ -721,5 +721,6 @@ public class Metrics {
 
 
 }
+
 
 

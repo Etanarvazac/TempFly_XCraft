@@ -7,20 +7,21 @@ on:
         description: 'Compile'
         required: false
         default: 'Staging'
-      branch:
-        description: 'Branch to build'
-        required: true
-        default: 'master'
+      userSuffix:
+        description: 'Optional Suffix'
+        required: false
+        default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      userSuffix: ${{ github.event.inputs.artifactSuffix != '' && format('TempFly-{0}', github.event.inputs.artifactSuffix) || 'TempFly' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.branch }}
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -37,5 +38,5 @@ jobs:
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: TempFly-${{ github.event.inputs.branch }}
+          name: ${{ env.userSuffix }}
           path: /home/runner/work/TempFly_XCraft/TempFly_XCraft/TempFly/target/*.jar

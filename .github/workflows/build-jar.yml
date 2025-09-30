@@ -1,10 +1,16 @@
 name: Build JAR
 
 on:
-  push:
-    branches:
-      - Master
-      - Beta
+  workflow_dispatch:
+    inputs:
+      enviroment:
+        description: 'Compile'
+        required: false
+        default: 'Staging'
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'master'
 
 jobs:
   build:

@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS tempfly_data
     infinite                BOOLEAN          DEFAULT 0,
     bypass                  BOOLEAN          DEFAULT 0,
     speed                   DOUBLE(5, 2)     DEFAULT -999.00,
+    display_visible         BOOLEAN          DEFAULT 1,
 
     PRIMARY KEY (uuid)
 );
+

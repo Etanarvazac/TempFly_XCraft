@@ -4,18 +4,20 @@ system:
   help:
     - "&8&l------&dTemp&fFly&8&l------"
     - "&6/tf"
-    - "&7- Toggle tempfly"
+    - "&7- Toggle TempFly."
     - "&6/tf time"
-    - "&7- View remaining fly time"
+    - "&7- View remaining fly time."
     - "&6/tf pay [player] [time]"
-    - "&7- send another player fly time"
+    - "&7- Send another player fly time."
+    - "&6/tf display [value]"
+    - "&7- Toggle the timer above your hotbar."
   help_extended:
     - "&6/tf give [player] [time]"
-    - "&7- Give a player fly time"
+    - "&7- Give a player fly time."
     - "&6/tf remove [player] [time]"
-    - "&7- Remove fly time from a player"
+    - "&7- Remove fly time from a player."
     - "&6/tf set [player] [time]"
-    - "&7- Set a players fly time"
+    - "&7- Set a players fly time."
 
 general:
 
@@ -187,6 +189,9 @@ command:
       - "particles"
     trail_set:
       - "trail"
+    display:
+      - "display"
+      - "timer"
 
   enable:
     - "on"
@@ -199,4 +204,5 @@ command:
     cmd_fly:
       toggle_other: "&c/tf [player] [on / off]"
       toggle_self: "&c/tf [on / off]"
+
     

@@ -1,25 +1,22 @@
 package com.moneybags.tempfly.util;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
-public class DailyDate extends Date {
+public class DailyDate {
 
-	private static final long serialVersionUID = 7853013854292147249L;
+    private final LocalDate date;
 
-	public DailyDate(long millis) {
-		super(millis);
-	}
-	
-	//Shhhh
-	@SuppressWarnings("deprecation")
-	@Override
-	public boolean equals(Object o) {
-		if (!(o instanceof Date)) {
-			return false;
-		}
-		Date date = (Date) o;
-		
-		return date.getDay() == this.getDay() && date.getMonth() == this.getMonth() && date.getYear() == this.getYear();
-	}
+    public DailyDate(long millis) {
+        this.date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DailyDate other = (DailyDate) o;
+        return this.date.equals(other.date);
+    }
 }

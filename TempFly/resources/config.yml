@@ -276,7 +276,9 @@ aesthetic:
       - 5
 
   action_bar:
+    # While enabled, you may choose whether the action bar timer is visible by default or not.
     enabled: true
+    default: true
     text: "&6Flight meter&7: {FORMATTED_TIME}"
 
 # Oddball features and things many people probably wont use can be found here.
@@ -327,4 +329,5 @@ workarounds:
     # This workaround can be disabled for users with the permission
     # tempfly.workaround.infinite.bypass.fix_b
     fix_b: false
+
 

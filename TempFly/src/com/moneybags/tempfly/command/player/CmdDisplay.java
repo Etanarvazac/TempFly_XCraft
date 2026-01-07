@@ -41,14 +41,14 @@ public class CmdDisplay extends TempFlyCommand {
     }
 
     // -- /tf display [on|off]
-    else if (args.length == 1 {
+    else if (args.length == 1) {
       if (!hasPermission(sender, "tempfly.time.display.self)) {
         sender.sendMessage(ChatColor.RED + "You don't have permission to toggle the visibility of your flight timer.");
         return;
       }
 
       newState = parseState(args[0]);
-      if (newState == null {
+      if (newState == null) {
         sender.sendMessage(ChatColor.RED + "Invalid state. Use 'on' or 'off' to set display visibility.");
         return;
       }
@@ -64,7 +64,7 @@ public class CmdDisplay extends TempFlyCommand {
       }
 
       newState = parseState(args[0]);
-      if newState == null {
+      if (newState == null) {
         sender.sendMessage (ChatColor.Red + "State was not specified. Command: /tf display [on|off] [player]");
         return;
       }

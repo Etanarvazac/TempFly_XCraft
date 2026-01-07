@@ -559,7 +559,7 @@ public class DataBridge implements DataFileHolder {
 				DataTable.TEMPFLY_DATA,
 				Boolean.TYPE,
 				"display_visible",
-				new String[] {"players", "display_visible"}
+				new String[] {"players", "display_visible"},
 				false);
 		
 		
@@ -671,5 +671,6 @@ public class DataBridge implements DataFileHolder {
 	}
 
 }
+
 
 

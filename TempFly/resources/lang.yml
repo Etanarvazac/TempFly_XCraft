@@ -4,18 +4,20 @@ system:
   help:
     - "&8&l------&dTemp&fFly&8&l------"
     - "&6/tf"
-    - "&7- Toggle tempfly"
+    - "&7- Toggle TempFly."
     - "&6/tf time"
-    - "&7- View remaining fly time"
+    - "&7- View remaining fly time."
     - "&6/tf pay [player] [time]"
-    - "&7- send another player fly time"
+    - "&7- Send another player fly time."
+    - "&6/tf display [value]"
+    - "&7- Toggle the timer above your hotbar."
   help_extended:
     - "&6/tf give [player] [time]"
-    - "&7- Give a player fly time"
+    - "&7- Give a player fly time."
     - "&6/tf remove [player] [time]"
-    - "&7- Remove fly time from a player"
+    - "&7- Remove fly time from a player."
     - "&6/tf set [player] [time]"
-    - "&7- Set a players fly time"
+    - "&7- Set a players fly time."
 
 general:
 
@@ -28,6 +30,11 @@ general:
   invalid:
     time_other: "{PREFIX} &f{PLAYER} &chas no more flight time!"
     time_self: "{PREFIX} &cYou have no more flight time!"
+    display_other: "{PREFIX} &cYou cannot turn on/off another players flight timer display!"
+    display_self: "{PREFIX} &cYou cannot turn on/off your flight timer display!"
+    display_state: "{PREFIX} &cInvalid state. Please use &aon&c, &aenable&c, &4off&c, or &4disable&c."
+    display_self_success: "{PREFIX} &aYour flight timer has been toggled."
+    display_other_success: "{PREFIX} &aFlight timer visibility for &f{PLAYER}."
     number: "{PREFIX} &f{NUMBER} &cis not a valid number!"
     particle: "{PREFIX} &f{PARTICLE} &cis not a valid particle type!"
     player: "{PREFIX} &cThe player &f{PLAYER} &cwas not found..."
@@ -35,6 +42,8 @@ general:
     command: "&fUnknown command. Type /help for more information."
     reciever: "{PREFIX} &cYou cannot pay yourself!"
     sender: "{PREFIX} &cOnly players can use this command!"
+    target: "{PREFIX} &cTarget was either invalid or not found!"
+    sender_console: "{PREFIX} &cConsole must specify a player to use this command!"
     flyer_self: "{PREFIX} &cYou are not flying!"
     funds: "{PREFIX} &cThis costs &f{COST}&c! You do not have enough money!"
     economy: "{PREFIX} &cYou must have a (&fvault&c) economy installed to use the shop!"
@@ -187,6 +196,9 @@ command:
       - "particles"
     trail_set:
       - "trail"
+    display:
+      - "display"
+      - "timer"
 
   enable:
     - "on"
@@ -195,8 +207,14 @@ command:
     - "off"
     - "disable"
 
+  # Notifications for any errors
   syntax_error:
     cmd_fly:
       toggle_other: "&c/tf [player] [on / off]"
       toggle_self: "&c/tf [on / off]"
+  
+  sql_error:
+    generic: "{PREFIX} &cDatabase error occurred."
+    pointer: "{PREFIX} &cDatabase error: Could not get pointer value."
+
     

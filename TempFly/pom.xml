@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>EtanXC</groupId>
     <artifactId>TempFly</artifactId>
-    <version>3.1.10</version>
+    <version>3.1.11</version>
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
@@ -15,6 +15,27 @@
                     <target>21</target>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.5.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<relocations>
+								<relocation>
+									<pattern>org.sqlite</pattern>
+									<shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
         </plugins>
         <resources>
             <resource>
@@ -62,6 +83,12 @@
             <version>8.0.32</version>
         </dependency>
 
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.45.1.0</version>
+		</dependency>
+
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -100,5 +127,8 @@
         </dependency>
     </dependencies>
 </project>
+
+
+
 
 

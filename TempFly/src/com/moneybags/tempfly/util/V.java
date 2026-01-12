@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+
 import com.moneybags.tempfly.util.data.Files;
 import com.moneybags.tempfly.util.data.Files.C;
 
@@ -22,19 +23,26 @@ public class V {
 	reload,
 	infinity,
 	
+	// Invalid Messages
 	invalidParticle,
 	invalidPermission,
 	invalidPlayer,
 	invalidNumber,
 	invalidTimeSelf,
 	invalidTimeOther,
+	invalidDisplaySelf,
+	invalidDisplayOther,
+	invalidDisplayState,
 	invalidSender,
+	invalidTarget,
+	invalidSenderConsole,
 	invalidCommand,
 	invalidReciever,
 	invalidFlyerSelf,
 	invalidFunds,
 	invalidEconomy,
 	
+	// Timer Messages
 	timeGivenOther,
 	timeGivenSelf,
 	timeRemovedOther,
@@ -51,11 +59,13 @@ public class V {
 	firstJoin,
 	dailyLogin,
 	
+	// Time Units
 	unitSeconds,
 	unitMinutes,
 	unitHours,
 	unitDays,
 	
+	// Info Messages
 	infoHeader,
 	infoPlayer,
 	infoDays,
@@ -65,6 +75,7 @@ public class V {
 	infoFooter,
 	infoInfinite,
 	
+	// Fly Messages
 	flyEnabledOther,
 	flyEnabledSelf,
 	flyDisabledOther,
@@ -81,9 +92,11 @@ public class V {
 	flyBypassEnabled,
 	flyBypassDisabled,
 	
+	// Idle Messages
 	disabledIdle,
 	consideredIdle,
 
+	// Requirement Messages
 	requireFailOther,
 	requireFailDefault,
 	requirePassDefault,
@@ -94,6 +107,7 @@ public class V {
 	requireFailHeight,
 	requireFailStruct,
 	
+	// Aesthetic Messages
 	particleType,
 	listName,
 	listPlaceholderOn,
@@ -102,22 +116,33 @@ public class V {
 	tagPlaceholderOn,
 	tagPlaceholderOff,
 	
+	// Featherboard
 	fbDays,
 	fbHours,
 	fbMinutes,
 	fbSeconds,
 	
+	// Warnings
 	warningTitle,
 	warningSubtitle,
+
+	// SQL Errors
+	sqlErrorGeneric,
+	sqlErrorPointer,
 	
+	// Action Bar
 	actionText,
 	
+	// Trails
 	trailRemovedSelf,
 	trailRemovedOther,
 	trailSetSelf,
 	trailSetOther,
 	
-	vaultPermsRequired;
+	// Other
+	vaultPermsRequired,
+	displaySelfSuccess,
+	displayOtherSuccess;
 
 	public static boolean
 	permaTimer,
@@ -208,20 +233,27 @@ public class V {
 		prefix 				= st(C.LANG, "system.prefix");
 		reload 				= st(C.LANG, "system.reload");
 		
+		// Invalid Messages
 		invalidParticle		= st(C.LANG, "general.invalid.particle");
 		invalidPermission	= st(C.LANG, "general.invalid.permission");
 		invalidPlayer		= st(C.LANG, "general.invalid.player");
 		invalidNumber		= st(C.LANG, "general.invalid.number");
 		invalidSender		= st(C.LANG, "general.invalid.sender");
+		invalidTarget       = st(C.LANG, "general.invalid.target");
+		invalidSenderConsole = st(C.LANG, "general.invalid.sender_console");
 		invalidCommand		= st(C.LANG, "general.invalid.command");
 		invalidTimeOther	= st(C.LANG, "general.invalid.time_other");
 		invalidTimeSelf		= st(C.LANG, "general.invalid.time_self");
+		invalidDisplaySelf	= st(C.LANG, "general.invalid.display_self");
+		invalidDisplayOther	= st(C.LANG, "general.invalid.display_other");
+		invalidDisplayState	= st(C.LANG, "general.invalid.display_state");
 		invalidReciever		= st(C.LANG, "general.invalid.reciever");
 		invalidFlyerSelf	= st(C.LANG, "general.invalid.flyer_self");
 		invalidFunds		= st(C.LANG, "general.invalid.funds");
 		invalidEconomy		= st(C.LANG, "general.invalid.economy");
 		vaultPermsRequired  = st(C.LANG, "general.invalid.vault_perms");
 		
+		// Timer Messages
 		timeGivenOther		= st(C.LANG, "general.time.given_other");
 		timeGivenSelf		= st(C.LANG, "general.time.given_self");
 		timeRemovedOther	= st(C.LANG, "general.time.removed_other");
@@ -238,11 +270,13 @@ public class V {
 		firstJoin			= st(C.LANG, "general.time.first_join");
 		dailyLogin			= st(C.LANG, "general.time.daily_login");
 		
+		// Time Units
 		unitSeconds			= st(C.LANG, "general.unit.seconds", "s");
 		unitMinutes			= st(C.LANG, "general.unit.minutes", "m");
 		unitHours			= st(C.LANG, "general.unit.hours", "h");
 		unitDays			= st(C.LANG, "general.unit.days", "d");
 		
+		// Info Messages
 		infoHeader			= st(C.LANG, "general.info.header");
 		infoPlayer			= st(C.LANG, "general.info.player");
 		infoDays			= st(C.LANG, "general.info.days");
@@ -251,7 +285,10 @@ public class V {
 		infoSeconds			= st(C.LANG, "general.info.seconds");
 		infoFooter			= st(C.LANG, "general.info.footer");
 		infoInfinite		= st(C.LANG, "general.info.infinite");
+		displaySelfSuccess   = st(C.LANG, "general.display_self_success");
+		displayOtherSuccess  = st(C.LANG, "general.display_other_success");
 		
+		// Fly Messages
 		flyEnabledOther	    = st(C.LANG, "general.fly.enabled_other");
 		flyEnabledSelf	    = st(C.LANG, "general.fly.enabled_self");
 		flyDisabledOther	= st(C.LANG, "general.fly.disabled_other");
@@ -268,9 +305,11 @@ public class V {
 		flyBypassEnabled	= st(C.LANG, "general.fly.bypass_enabled");
 		flyBypassDisabled	= st(C.LANG, "general.fly.bypass_disabled");
 		
+		// Idle Messages
 		disabledIdle 		= st(C.LANG, "general.fly.idle_drop");
 		consideredIdle 		= st(C.LANG, "general.fly.idle");
 		
+		// Requirement Messages
 		requireFailOther	= st(C.LANG, "general.requirement.fail.default_other");
 		requireFailDefault	= st(C.LANG, "general.requirement.fail.default");
 		requirePassDefault	= st(C.LANG, "general.requirement.pass.default");
@@ -281,17 +320,25 @@ public class V {
 		requireFailHeight	= st(C.LANG, "general.requirement.fail.height");
 		requireFailStruct   = st(C.LANG, "general.requirement.fail.structure");
 		
+		// Featherboard
 		fbDays				= st(C.LANG, "aesthetic.featherboard.days");
 		fbHours				= st(C.LANG, "aesthetic.featherboard.hours");
 		fbMinutes			= st(C.LANG, "aesthetic.featherboard.minutes");
 		fbSeconds			= st(C.LANG, "aesthetic.featherboard.seconds");
 		infinity			= st(C.LANG, "aesthetic.symbols.infinity");
 		
+		// Warnings
 		warningTitle		= st(C.CONFIG, "aesthetic.warning.title");
 		warningSubtitle		= st(C.CONFIG, "aesthetic.warning.subtitle");
+
+		// SQL Errors
+		sqlErrorGeneric     = st(C.LANG, "sql_error.generic");
+		sqlErrorPointer     = st(C.LANG, "sql_error.pointer");
 		
+		// Action Bar
 		actionText			= st(C.CONFIG, "aesthetic.action_bar.text");
 		
+		// Trails
 		trailRemovedSelf	= st(C.LANG, "aesthetic.trail.removed_self");
 		trailRemovedOther	= st(C.LANG, "aesthetic.trail.removed_other");
 		trailSetSelf		= st(C.LANG, "aesthetic.trail.set_self");

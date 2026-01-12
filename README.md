@@ -17,11 +17,11 @@ Tempfly is a highly configurable Spigot/Bukkit plugin for Minecraft that introdu
 - Regular Backups
 - SQL support
 - Aesthetics:
-  - Flight Indicator - Player names in TAB and their tags can have text added to indicate they have Fly Time active (flying players without fly time will not have this indicator)
+  - Flight Indicator - Player names in TAB and their tags can have text added to indicate they have Fly Time active (flying players without fly time will not have this indicator). Players will soon be able to toggle this on and off with "/tf display on/off".
   - Particles - Players can have particle trails while flying
 - Warnings - When fly time is about to run out, players can recieve notice by a title and subsitle displayed on their screen
 - Other features (uncommon, but available):
-  - Relative Times - Allows you to control how fast Fly Time will be used in select orlds or regions (e.g.: If a player is in spawn, slow time use by half)
+  - Relative Times - Allows you to control how fast Fly Time will be used in select worlds or regions (e.g.: If a player is in spawn, slow time use by half)
   - Shop GUI - TempFly has a built-in GUI for buying fly time. Ideal for those who don't want a whole shop GUI plugin
 
 ## Developers:

@@ -554,6 +554,12 @@ public class DataBridge implements DataFileHolder {
 				Double.TYPE,
 				"speed",
 				new String[] {"players", "speed"},
+				false),
+		PLAYER_DISPLAY_VISIBLE(
+				DataTable.TEMPFLY_DATA,
+				Boolean.TYPE,
+				"display_visible",
+				new String[] {"players", "display_visible"},
 				false);
 		
 		
@@ -665,4 +671,6 @@ public class DataBridge implements DataFileHolder {
 	}
 
 }
+
+
 

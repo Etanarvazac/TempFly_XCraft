@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      userSuffix: ${{ github.event.inputs.userSuffix != '' && github.event.inputs.userSuffix || format('TempFly-{0}', github.event.inputs.userSuffix) || 'TempFly' }}
+      userSuffix: ${{ github.event.inputs.artifactSuffix != '' && format('TempFly-{0}', github.event.inputs.artifactSuffix) || 'TempFly' }}
 
     steps:
       - name: Checkout repository

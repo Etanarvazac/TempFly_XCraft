@@ -518,19 +518,42 @@ public class FlightManager implements Listener, Reloadable {
 			if (gm == GameMode.CREATIVE && V.creativeTimer) {
 				// Since they were in creative, let's not remove flight.
 				Console.debug("GameMode: " + gm);
+				if (wasFlying) {
+					user.applyFlightCorrect(true);
+					user.applySpeedCorrect(true, 10);
+				} else {
+					user.disableFlight(-1, false);
+					Console.debug("TF--| Flight was not enabled before world change for CREATIVE.");
+				}
 			} else if (gm == GameMode.SPECTATOR) {
 				// Since they were in spectator, let's not give them a 1-way
 				// ticket to the void.
 				Console.debug("GameMode: " + gm);
+				if (wasFlying) {
+					user.applyFlightCorrect(true);
+					user.applySpeedCorrect(true, 10);
+				}
+			} else if (gm == GameMode.SURVIVAL) {
+				// Since they were in survival, let's use the last fly state
+				// they had before changing worlds.
+				Console.debug("GameMode: " + gm);
+				if (wasFlying) {
+					boolean canFly = user.enableFlight();
+					if (!canFly) {
+						user.disableFlight(-1, false);
+						Console.debug("TF--| Flight disabled due to world requirements for SURVIVAL.");
+					} else {
+						user.applyFlightCorrect(true);
+						user.applySpeedCorrect(true, 10);
+						Console.debug("TF--| Flight maintained due to world requirements for SURVIVAL and flight was permitted.");
+					}
+				} else {
+					user.disableFlight(-1, false);
+					Console.debug("TF--| Flight was not enabled before world change for SURVIVAL.");
+				}
 			}
 		}
-		// TODO flight cannot just be enforced on every world change as it will break Essentials fly 
-		// compatibility. So it must be enforced when something happens to actually disable the flight,
-		// making it impossible to check if it should be disabled here...
-
-		// else if (!user.hasFlightEnabled() && user.getPlayer().getAllowFlight()){
-		// user.enforce(1);
-		// }
+		Console.debug("TF--| World change flight processing complete.");
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package com.moneybags.tempfly.user;
 
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,8 +33,8 @@ import com.moneybags.tempfly.util.Console;
 import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
 import com.moneybags.tempfly.util.data.DataBridge;
-import com.moneybags.tempfly.util.data.DataPointer;
 import com.moneybags.tempfly.util.data.DataBridge.DataValue;
+import com.moneybags.tempfly.util.data.DataPointer;
 
 
 public class FlightUser {
@@ -752,6 +753,22 @@ public class FlightUser {
 	}
 	
 	public void doActionBar() {
+		try {
+			Boolean isVisible = (Boolean) manager.getTempFly().getDataBridge().getValue(
+					DataPointer.of(DataValue.PLAYER_DISPLAY_VISIBLE, p.getUniqueId().toString())
+				);
+			if (isVisible == null){
+				Console.debug("--| Action bar visibility is null for user, defaulting to true.");
+				manager.getTempFly().getDataBridge().stageChange(
+						DataPointer.of(DataValue.PLAYER_DISPLAY_VISIBLE, p.getUniqueId().toString()), true);
+			} else if (!isVisible) {
+				Console.debug("--| Action bar is not visible for user because display is disabled.");
+				return;
+			}
+		} catch (SQLException e) {
+			U.m(p, V.sqlErrorPointer);
+			return;
+		}
 		ActionBarAPI.sendActionBar(p, timeManager.regexString(V.actionText, getTime()));
 	}
 	

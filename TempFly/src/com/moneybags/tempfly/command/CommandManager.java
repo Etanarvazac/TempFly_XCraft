@@ -20,6 +20,7 @@ import com.moneybags.tempfly.command.admin.CmdSet;
 import com.moneybags.tempfly.command.admin.CmdTrailRemove;
 import com.moneybags.tempfly.command.admin.CmdTrailSet;
 import com.moneybags.tempfly.command.player.CmdBypass;
+import com.moneybags.tempfly.command.player.CmdDisplay;
 import com.moneybags.tempfly.command.player.CmdFly;
 import com.moneybags.tempfly.command.player.CmdHelp;
 import com.moneybags.tempfly.command.player.CmdInfinite;
@@ -309,7 +310,8 @@ public class CommandManager {
 		SPEED(CmdSpeed.class, "speed"),
 		TIME(CmdTime.class, "time"),
 		TRAILS(CmdTrails.class, "trails"),
-		MIGRATE(CmdMigrate.class, "migrate");
+		MIGRATE(CmdMigrate.class, "migrate"),
+		DISPLAY(CmdDisplay.class, "display");
 		
 		private Class<? extends TempFlyCommand> clazz;
 		private String base;

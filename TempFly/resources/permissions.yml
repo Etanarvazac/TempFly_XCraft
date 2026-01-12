@@ -48,6 +48,10 @@ tempfly.time.display.self:
   desc: Allow user to show/hide their own timer above the action bar.
   default: not-op
 
+tempfly.time.display.other:
+  desc: Allows staff to show/hide another players actionbar timer.
+  default: op
+
 tempfly.time.self:
   desc: Allow user to view thier remaining time.
   default: not-op

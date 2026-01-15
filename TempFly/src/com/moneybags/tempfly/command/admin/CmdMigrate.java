@@ -18,6 +18,10 @@ import com.moneybags.tempfly.command.TempFlyCommand;
 import com.moneybags.tempfly.util.Console;
 import com.moneybags.tempfly.util.data.DataBridge.DataTable;
 import com.moneybags.tempfly.util.data.DataBridge.DataValue;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import org.bson.Document;
 
 public class CmdMigrate extends TempFlyCommand{
 
@@ -41,7 +45,7 @@ public class CmdMigrate extends TempFlyCommand{
 		}
 		
 		if (!sure) {
-			s.sendMessage("Warning, Using this command will take all data found in the local tempfly (data.yml) and migrate it to the MySql database defined in the config. If there is any TempFly data already in this database it has the possibility of being overwritten by the migrated data. Please type the command again within the next 5 seconds to continue.");
+			s.sendMessage("Warning, Using this command will take all data found in the local tempfly (data.yml) and migrate it to the database (MySQL or MongoDB) defined in the config. If there is any TempFly data already in this database it has the possibility of being overwritten by the migrated data. Please type the command again within the next 5 seconds to continue.");
 			sure = true;
 			Bukkit.getScheduler().runTaskLater(tempfly, () -> {
 				sure = false;
@@ -49,8 +53,8 @@ public class CmdMigrate extends TempFlyCommand{
 			return;
 		}
 		
-		if (!tempfly.getDataBridge().hasSqlEnabled()) {
-			s.sendMessage("You must enable MySql in the config to migrate your tempfly data...");
+		if (!tempfly.getDataBridge().hasDatabaseEnabled()) {
+			s.sendMessage("You must enable MySQL or MongoDB in the config to migrate your tempfly data...");
 			return;
 		}
 		
@@ -74,14 +78,24 @@ public class CmdMigrate extends TempFlyCommand{
 	    for (String key: csPlayers.getKeys(false)) {
 	    	String[] path = new String[] {key};
 	    
-			try (PreparedStatement stCreate = tempfly.getDataBridge().prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)")){
-				stCreate.setString(1, key);
-				stCreate.execute();
-				stCreate.close();
-			} catch (SQLException e) {
-				s.sendMessage("Failed to create database entry for (" + key + ")");
-				e.printStackTrace();
-				continue;
+			if (tempfly.getDataBridge().hasSqlEnabled()) {
+				try (PreparedStatement stCreate = tempfly.getDataBridge().prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)")){
+					stCreate.setString(1, key);
+					stCreate.execute();
+					stCreate.close();
+				} catch (SQLException e) {
+					s.sendMessage("Failed to create database entry for (" + key + ")");
+					e.printStackTrace();
+					continue;
+				}
+			} else if (tempfly.getDataBridge().hasMongoEnabled()) {
+				MongoCollection<Document> collection = tempfly.getDataBridge().getMongoCollection(DataTable.TEMPFLY_DATA.getMongoCollection());
+				Document filter = new Document(DataTable.TEMPFLY_DATA.getPrimaryKey(), key);
+				Document existing = collection.find(filter).first();
+				if (existing == null) {
+					Document doc = new Document(DataTable.TEMPFLY_DATA.getPrimaryKey(), key);
+					collection.insertOne(doc);
+				}
 			}
 			
 	    	 for (DataValue value: DataValue.values()) {
@@ -104,32 +118,46 @@ public class CmdMigrate extends TempFlyCommand{
 	 				continue;
 	 			}
 	 			
-	 			PreparedStatement st = tempfly.getDataBridge().prepareStatement(
-						"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
-						+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
-				Class<?> type = value.getType();
-				try {
-					if (type.equals(Boolean.TYPE)) {
-						st.setBoolean(1, (boolean) obj);
-					} else if (type.equals(Double.TYPE)) {
-						st.setDouble(1, (double) obj);
-					}else if (type.equals(String.class)) {
-						st.setString(1, (String) obj);
-					} else if (type.equals(Long.TYPE)) {
-						st.setLong(1, (long) obj);
+	 			if (tempfly.getDataBridge().hasMongoEnabled()) {
+	 				try {
+	 					MongoCollection<Document> collection = tempfly.getDataBridge().getMongoCollection(value.getTable().getMongoCollection());
+	 					Document filter = new Document(value.getTable().getPrimaryKey(), path[0]);
+	 					Document update = new Document("$set", new Document(value.getSqlColumn(), obj));
+	 					UpdateOptions options = new UpdateOptions().upsert(true);
+	 					collection.updateOne(filter, update, options);
+	 				} catch (Exception e) {
+	 					s.sendMessage("Error while setting MongoDB data for (" + key + ")");
+	 					e.printStackTrace();
+	 					continue;
+	 				}
+	 			} else if (tempfly.getDataBridge().hasSqlEnabled()) {
+	 				PreparedStatement st = tempfly.getDataBridge().prepareStatement(
+							"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
+							+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
+					Class<?> type = value.getType();
+					try {
+						if (type.equals(Boolean.TYPE)) {
+							st.setBoolean(1, (boolean) obj);
+						} else if (type.equals(Double.TYPE)) {
+							st.setDouble(1, (double) obj);
+						}else if (type.equals(String.class)) {
+							st.setString(1, (String) obj);
+						} else if (type.equals(Long.TYPE)) {
+							st.setLong(1, (long) obj);
+						}
+						st.setString(2, path[0]);
+						st.execute();
+						st.close();
+					} catch (Exception e) {
+						s.sendMessage("Error while setting data");
+						e.printStackTrace();
+						continue;
 					}
-					st.setString(2, path[0]);
-					st.execute();
-					st.close();
-				} catch (Exception e) {
-					s.sendMessage("Error while setting data");
-					e.printStackTrace();
-					continue;
-				}
+	 			}
 	 	    }
 	    }
 	    
-	    String statement = "U";
+	    s.sendMessage("Migration complete!");
 	  
 	}
 

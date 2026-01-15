@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bson.Document;
 
 import com.moneybags.tempfly.aesthetic.particle.Particles;
 import com.moneybags.tempfly.fly.FlightManager;
@@ -13,6 +14,8 @@ import com.moneybags.tempfly.time.TimeManager;
 import com.moneybags.tempfly.util.data.DataBridge;
 import com.moneybags.tempfly.util.data.DataPointer;
 import com.moneybags.tempfly.util.data.DataBridge.DataValue;
+import com.moneybags.tempfly.util.data.DataBridge.DataTable;
+import com.mongodb.client.MongoCollection;
 
 public class UserLoader implements Runnable {
 
@@ -55,7 +58,16 @@ public class UserLoader implements Runnable {
 				e.printStackTrace();
 				return;
 			}
-			
+		}
+		
+		if (bridge.hasMongoEnabled()) {
+			MongoCollection<Document> collection = bridge.getMongoCollection(DataTable.TEMPFLY_DATA.getMongoCollection());
+			Document filter = new Document(DataTable.TEMPFLY_DATA.getPrimaryKey(), u.toString());
+			Document existing = collection.find(filter).first();
+			if (existing == null) {
+				Document doc = new Document(DataTable.TEMPFLY_DATA.getPrimaryKey(), u.toString());
+				collection.insertOne(doc);
+			}
 		}
 		
 		

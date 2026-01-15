@@ -61,6 +61,14 @@ system:
     name: "name"
     user: "user"
     pass: "pass"
+  mongodb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 27017
+    name: "tempfly"
+    user: ""
+    pass: ""
+    auth_db: "admin"
 
 general:
   # This feature prevents conflictions with other plugins fly features.

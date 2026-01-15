@@ -35,6 +35,14 @@
                   <pattern>org.sqlite</pattern>
                   <shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>com.mongodb</pattern>
+                  <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.bson</pattern>
+                  <shadedPattern>com.moneybags.tempfly.libs.bson</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>

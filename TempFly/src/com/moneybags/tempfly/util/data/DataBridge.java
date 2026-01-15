@@ -33,12 +33,22 @@ import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.result.UpdateResult;
+import org.bson.Document;
 
 
 public class DataBridge implements DataFileHolder {
 
 	private TempFly tempfly;
 	private MysqlDataSource dataSource;
+	private MongoClient mongoClient;
+	private MongoDatabase mongoDatabase;
 	
 	private File dataf;
 	private FileConfiguration data;
@@ -61,6 +71,14 @@ public class DataBridge implements DataFileHolder {
 	
 	public boolean hasSqlEnabled() {
 		return dataSource != null;
+	}
+	
+	public boolean hasMongoEnabled() {
+		return mongoClient != null && mongoDatabase != null;
+	}
+	
+	public boolean hasDatabaseEnabled() {
+		return hasSqlEnabled() || hasMongoEnabled();
 	}
 	
 	public boolean connectSql() throws SQLException {
@@ -88,6 +106,41 @@ public class DataBridge implements DataFileHolder {
 	    return true;
 	}
 	
+	public boolean connectMongo() {
+		String host = Files.config.getString("system.mongodb.host");
+		int port = Files.config.getInt("system.mongodb.port");
+		String name = Files.config.getString("system.mongodb.name");
+		String user = Files.config.getString("system.mongodb.user");
+		String pass = Files.config.getString("system.mongodb.pass");
+		String authDb = Files.config.getString("system.mongodb.auth_db", "admin");
+		
+		StringBuilder connectionString = new StringBuilder("mongodb://");
+		boolean hasAuth = user != null && !user.isEmpty() && pass != null && !pass.isEmpty();
+		if (hasAuth) {
+			connectionString.append(user).append(":").append(pass).append("@");
+		}
+		connectionString.append(host).append(":").append(port);
+		if (hasAuth) {
+			connectionString.append("/").append(name);
+			if (!authDb.equals(name)) {
+				connectionString.append("?authSource=").append(authDb);
+			}
+		}
+		
+		try {
+			MongoClient client = MongoClients.create(connectionString.toString());
+			MongoDatabase database = client.getDatabase(name);
+			database.runCommand(new Document("ping", 1));
+			this.mongoClient = client;
+			this.mongoDatabase = database;
+			return true;
+		} catch (Exception e) {
+			Console.severe("Could not establish a connection to MongoDB!");
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	private void initDb() throws IOException, SQLException {
 	    String setup;
 	    try (InputStream in = tempfly.getResource("dbsetup.sql")) {
@@ -104,6 +157,12 @@ public class DataBridge implements DataFileHolder {
 	    Console.info("§2Database setup complete.");
 	}
 	
+	private void initMongoDb() {
+		MongoCollection<Document> collection = mongoDatabase.getCollection(DataTable.TEMPFLY_DATA.getMongoCollection());
+		collection.createIndex(new Document(DataTable.TEMPFLY_DATA.getPrimaryKey(), 1));
+		Console.info("§2MongoDB setup complete.");
+	}
+	
 	public DataBridge(TempFly tempfly) throws IOException, SQLException {
 		this.tempfly = tempfly;
 		if (Files.config.getBoolean("system.mysql.enabled")) {
@@ -111,8 +170,13 @@ public class DataBridge implements DataFileHolder {
 			initDb();
 		}
 		
-		// If connection is null we will default to yaml storage.
-		if (!hasSqlEnabled()) {
+		if (Files.config.getBoolean("system.mongodb.enabled")) {
+			if (connectMongo()) {
+				initMongoDb();
+			}
+		}
+		
+		if (!hasDatabaseEnabled()) {
 			dataf = new File(tempfly.getDataFolder(), "data.yml");
 		    if (!dataf.exists()){
 		    	dataf.getParentFile().mkdirs();
@@ -283,10 +347,14 @@ public class DataBridge implements DataFileHolder {
 			} catch (SQLException e) {
 				e.printStackTrace();
 				continue;
+			} catch (Exception e) {
+				Console.severe("Error saving data to database: " + e.getMessage());
+				e.printStackTrace();
+				continue;
 			}
 		}
 		for (DataFileHolder holder: altered) {
-			if (!hasSqlEnabled() || holder.forceYaml()) {
+			if (!hasDatabaseEnabled() || holder.forceYaml()) {
 				holder.saveData();
 			}
 		}
@@ -335,7 +403,7 @@ public class DataBridge implements DataFileHolder {
 		}
 		Console.debug("--|> No local data found, prepare for data retrieval!");
 		
-		if (!hasSqlEnabled()) {
+		if (!hasDatabaseEnabled()) {
 			Console.debug("--| Using YAML");
 			int index = 0;
 			StringBuilder sb = new StringBuilder();
@@ -347,6 +415,14 @@ public class DataBridge implements DataFileHolder {
 				index++;
 			}
 			return value.getTable().getDataFileHolder(tempfly).getDataConfiguration().get(sb.toString());
+		} else if (hasMongoEnabled()) {
+			Console.debug("--| Using MongoDB");
+			DataTable table = value.getTable();
+			MongoCollection<Document> collection = mongoDatabase.getCollection(table.getMongoCollection());
+			Document doc = collection.find(Filters.eq(table.getPrimaryKey(), path[0])).first();
+			if (doc != null) {
+				return doc.get(value.getSqlColumn());
+			}
 		} else {
 			Console.debug("--| Using SQL");
 			DataTable table = value.getTable();
@@ -377,6 +453,13 @@ public class DataBridge implements DataFileHolder {
 		}
 	}
 	
+	public MongoCollection<Document> getMongoCollection(String collectionName) {
+		if (!hasMongoEnabled()) {
+			return null;
+		}
+		return mongoDatabase.getCollection(collectionName);
+	}
+	
 	public Object getOrDefault(DataPointer pointer, Object def) {
 		Object object;
 		try {
@@ -403,7 +486,7 @@ public class DataBridge implements DataFileHolder {
 	
 	public Map<String, Object> getValues(DataTable table, DataFileHolder fileHolder, String yamlPathTo, String row, String... extra) {
 		Map<String, Object> values = new HashMap<>();
-		if (!hasSqlEnabled() || fileHolder.forceYaml()) {
+		if (!hasDatabaseEnabled() || fileHolder.forceYaml()) {
 			FileConfiguration df = fileHolder == null ?
 					table.getDataFileHolder(tempfly).getDataConfiguration()
 					: fileHolder.getDataConfiguration();
@@ -413,6 +496,34 @@ public class DataBridge implements DataFileHolder {
 				for (String key: csValues.getKeys(false)) {
 					values.put(key, df.get(path + "." + key));
 				}		
+			}
+		} else if (hasMongoEnabled()) {
+			MongoCollection<Document> collection = mongoDatabase.getCollection(table.getMongoCollection());
+			Document doc = collection.find(Filters.eq(table.getPrimaryKey(), row)).first();
+			if (doc != null) {
+				for (String key : doc.keySet()) {
+					if (!key.equals(table.getPrimaryKey())) {
+						values.put(key, doc.get(key));
+					}
+				}
+			}
+		} else if (hasSqlEnabled()) {
+			try (Connection conn = dataSource.getConnection();
+				 PreparedStatement st = conn.prepareStatement("SELECT * FROM " + table.getSqlTable() + " WHERE " + table.getPrimaryKey() + " = ?")) {
+				st.setString(1, row);
+				ResultSet result = st.executeQuery();
+				if (result.next()) {
+					for (DataValue value : DataValue.values()) {
+						if (value.getTable() == table) {
+							Object obj = result.getObject(value.getSqlColumn());
+							if (obj != null) {
+								values.put(value.getSqlColumn(), obj);
+							}
+						}
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 		for (StagedChange local: changes.values()) {
@@ -427,7 +538,7 @@ public class DataBridge implements DataFileHolder {
 		DataValue value = change.getValue();
 		String[] path = change.getPath();
 		if (V.debug) {Console.debug("", "-----Data Bridge Set Value-----", "--| Type: " + value.toString(), "--| Path: " + U.arrayToString(path, " | "));	}
-		if (!hasSqlEnabled() || forceYaml) {
+		if (!hasDatabaseEnabled() || forceYaml) {
 			int index = 0;
 			StringBuilder sb = new StringBuilder();
 			for (String s: value.getYamlPath()) {
@@ -445,6 +556,26 @@ public class DataBridge implements DataFileHolder {
 				yaml.createSection(sb.toString());
 			}
 			yaml.set(sb.toString(), change.getData());
+		} else if (hasMongoEnabled()) {
+			try {
+				DataTable table = value.getTable();
+				MongoCollection<Document> collection = mongoDatabase.getCollection(table.getMongoCollection());
+				Document filter = new Document(table.getPrimaryKey(), path[0]);
+				Document update = new Document("$set", new Document(value.getSqlColumn(), change.getData()));
+				UpdateOptions options = new UpdateOptions().upsert(true);
+				UpdateResult result = collection.updateOne(filter, update, options);
+				if (V.debug) {
+					Console.debug("--| Setting MongoDB value: " + value.getSqlColumn() + " = " + String.valueOf(change.getData()));
+					Console.debug("--| Update result - Matched: " + result.getMatchedCount() + ", Modified: " + result.getModifiedCount() + ", Upserted: " + (result.getUpsertedId() != null ? result.getUpsertedId() : "none"));
+				}
+				if (result.getMatchedCount() == 0 && result.getUpsertedId() == null) {
+					Console.warn("MongoDB update did not match or upsert document for " + table.getPrimaryKey() + " = " + path[0]);
+				}
+			} catch (Exception e) {
+				Console.severe("Failed to update MongoDB document for " + value.getSqlColumn() + ": " + e.getMessage());
+				e.printStackTrace();
+				throw new SQLException("MongoDB update failed", e);
+			}
 		} else {
 			Console.debug("UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
 					+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = " + path[0]);
@@ -491,6 +622,15 @@ public class DataBridge implements DataFileHolder {
 		}
 		
 		public String getSqlTable() {
+			switch (this) {
+			case TEMPFLY_DATA:
+				return "tempfly_data";
+			default:
+				return null;
+			}
+		}
+		
+		public String getMongoCollection() {
 			switch (this) {
 			case TEMPFLY_DATA:
 				return "tempfly_data";

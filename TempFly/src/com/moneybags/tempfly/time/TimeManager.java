@@ -276,7 +276,7 @@ public class TimeManager implements Listener {
 			Console.debug("--| Using permission based bonus...");
 			for (Entry<String, Double> entry: V.dailyBonus.entrySet()) {
 				if (p.hasPermission("tempfly.bonus." + entry.getKey())) {
-					bonus += entry.getValue();
+					bonus = Math.max(bonus, entry.getValue());
 				}
 			}
 			bonus = maxTime > -1 && ((currentTime + bonus) > maxTime) ? maxTime - currentTime : bonus;

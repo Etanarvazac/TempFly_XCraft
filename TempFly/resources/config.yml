@@ -176,7 +176,7 @@ general:
     first_join: 60
     # Permission based time given to a player as a daily login bonus.
     # The permission is "tempfly.bonus.[group]"
-    # Time will stack for each permission the player inherits. Make sure to configure your permissions properly.
+    # Only the highest permission bonus will be given (does not stack).
     daily_login: 
       member: 15
       vip: 30

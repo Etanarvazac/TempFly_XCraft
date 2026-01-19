@@ -10,6 +10,8 @@ Tempfly is a highly configurable Spigot/Bukkit plugin for Minecraft that introdu
   - Offline - You can have the Fly Time pause when a player is offline or have X amount of Fly Time lost for every X number of seconds a player is offline (Flight Decay)
   - AFK - Players who are idle for X number of seconds can have their Fly Time paused until they return
   - Bonus - Players can gain fly time as a daily login incentive and as first time join bonus
+  - Display - Players can toggle the ActionBar timer display via command
+    - Display is per-player and staff can be granted permission to remotely toggle another player's timer visibility on or off
   - Other Conditions - Fly timers can be paused if...
     - ...a player toggled off flight
     - ...a player is standing on the ground with flight enabled
@@ -23,6 +25,10 @@ Tempfly is a highly configurable Spigot/Bukkit plugin for Minecraft that introdu
 - Other features (uncommon, but available):
   - Relative Times - Allows you to control how fast Fly Time will be used in select worlds or regions (e.g.: If a player is in spawn, slow time use by half)
   - Shop GUI - TempFly has a built-in GUI for buying fly time. Ideal for those who don't want a whole shop GUI plugin
+
+## Bug Reports & Suggestions
+These can be sent here on GitHub (using the Issues tab at top of page) or on [my Discord server](https://discord.gg/jP2uyYzbCA)
+If you choose Discord, be sure to select "Plugins" from the onboarding questions or "Channels & Roles" at the top of the channel list. You must have that selected to see the TempFly channels.
 
 ## Developers:
 TempFly can be hooked into using the TempFlyAPI. this can be aquired using TempFly.getAPI().

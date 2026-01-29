@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>EtanXC</groupId>
   <artifactId>TempFly</artifactId>
-  <version>3.1.11</version>
+  <version>3.2.0</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -30,10 +30,24 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>shaded</shadedClassifierName>
               <relocations>
                 <relocation>
                   <pattern>org.sqlite</pattern>
                   <shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.mongodb</pattern>
+                  <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.mongodb</pattern>
+                  <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.bson</pattern>
+                  <shadedPattern>com.moneybags.tempfly.libs.bson</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

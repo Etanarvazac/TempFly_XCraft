@@ -11,6 +11,7 @@ import com.moneybags.tempfly.command.TempFlyCommand;
 import com.moneybags.tempfly.user.FlightUser;
 import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
+import com.moneybags.tempfly.util.Console;
 
 public class CmdInfinite extends TempFlyCommand {
 
@@ -28,7 +29,19 @@ public class CmdInfinite extends TempFlyCommand {
 			U.m(s, V.invalidSender);
 			return;
 		}
-		FlightUser user = tempfly.getFlightManager().getUser((Player)s);
+		Player p = (Player)s;
+		// Check if player has the actual infinite permission
+		if (!p.hasPermission("tempfly.infinite")) {
+			String message = V.invalidPermissionExtended
+					.replace("{PREFIX}", V.prefix)
+					.replace("{PLAYER}", p.getName())
+					.replace("{PERMISSION}", "tempfly.infinite")
+					.replace("{COMMAND}", "/tempfly infinite");
+			Console.info(message);
+			U.m(s, V.invalidPermission);
+			return;
+		}
+		FlightUser user = tempfly.getFlightManager().getUser(p);
 		boolean toggleVal = false;
 		if (args.length > 1) {
 			switch (args[1].toLowerCase()) {

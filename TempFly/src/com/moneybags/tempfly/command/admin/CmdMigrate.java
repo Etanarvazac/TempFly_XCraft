@@ -16,121 +16,156 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.command.TempFlyCommand;
 import com.moneybags.tempfly.util.Console;
+import com.moneybags.tempfly.util.data.DataBridge;
 import com.moneybags.tempfly.util.data.DataBridge.DataTable;
 import com.moneybags.tempfly.util.data.DataBridge.DataValue;
 
-public class CmdMigrate extends TempFlyCommand{
+public class CmdMigrate extends TempFlyCommand {
+
+	private static boolean sure = false;
 
 	public CmdMigrate(TempFly tempfly, String[] args) {
 		super(tempfly, args);
-		
 	}
 
 	@Override
 	public List<String> getPotentialArguments(CommandSender s) {
 		return new ArrayList<>();
 	}
-	
-	private static boolean sure = false;
 
 	@Override
 	public void executeAs(CommandSender s) {
+
 		if (!(s instanceof ConsoleCommandSender)) {
 			s.sendMessage("Only the console may use this command!");
 			return;
 		}
-		
-		if (!sure) {
-			s.sendMessage("Warning, Using this command will take all data found in the local tempfly (data.yml) and migrate it to the MySql database defined in the config. If there is any TempFly data already in this database it has the possibility of being overwritten by the migrated data. Please type the command again within the next 5 seconds to continue.");
-			sure = true;
-			Bukkit.getScheduler().runTaskLater(tempfly, () -> {
-				sure = false;
-			}, 100);
-			return;
-		}
-		
-		if (!tempfly.getDataBridge().hasSqlEnabled()) {
-			s.sendMessage("You must enable MySql in the config to migrate your tempfly data...");
-			return;
-		}
-		
-		File dataf = new File(tempfly.getDataFolder(), "data.yml");
-	    if (!dataf.exists()){
-	    	s.sendMessage("There is no datafile to migrate...");
-	    	return;
-	    }
-	    FileConfiguration data = new YamlConfiguration();
-	    try { data.load(dataf); } catch (Exception e1) {
-	    	s.sendMessage("There is a problem inside the data.yml, If you cannot fix the issue, please contact the developer.");
-	        e1.printStackTrace();
-	        return;
-	    }
 
-	    ConfigurationSection csPlayers = data.getConfigurationSection("players");
-	    if (csPlayers == null) {
-	    	s.sendMessage("There is no data to migrate...");
-	    	return;
-	    }
-	    for (String key: csPlayers.getKeys(false)) {
-	    	String[] path = new String[] {key};
-	    
-			try (PreparedStatement stCreate = tempfly.getDataBridge().prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)")){
-				stCreate.setString(1, key);
-				stCreate.execute();
-				stCreate.close();
-			} catch (SQLException e) {
-				s.sendMessage("Failed to create database entry for (" + key + ")");
-				e.printStackTrace();
-				continue;
-			}
-			
-	    	 for (DataValue value: DataValue.values()) {
-	 	    	if (value.getTable() != DataTable.TEMPFLY_DATA) {
-	 	    		continue;
-	 	    	}
-	 	    	
-	 	    	int index = 0;
-	 			StringBuilder sb = new StringBuilder();
-	 			for (String string: value.getYamlPath()) {
-	 				sb.append((sb.length() > 0 ? "." : "") + string);
-	 				if (path.length > index) {
-	 					sb.append("." + path[index]);
-	 				}
-	 				index++;
-	 			}
-	 			Console.debug(sb.toString());
-	 			Object obj = data.get(sb.toString());
-	 			if (obj == null) {
-	 				continue;
-	 			}
-	 			
-	 			PreparedStatement st = tempfly.getDataBridge().prepareStatement(
-						"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
-						+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
-				Class<?> type = value.getType();
-				try {
-					if (type.equals(Boolean.TYPE)) {
-						st.setBoolean(1, (boolean) obj);
-					} else if (type.equals(Double.TYPE)) {
-						st.setDouble(1, (double) obj);
-					}else if (type.equals(String.class)) {
-						st.setString(1, (String) obj);
-					} else if (type.equals(Long.TYPE)) {
-						st.setLong(1, (long) obj);
-					}
-					st.setString(2, path[0]);
-					st.execute();
-					st.close();
-				} catch (Exception e) {
-					s.sendMessage("Error while setting data");
+		// ---- Double confirmation ----
+		if (!sure) {
+			s.sendMessage("§eWARNING: This will migrate ALL data from data.yml to MySQL.");
+			s.sendMessage("§eIf data already exists in MySQL it may be overwritten.");
+			s.sendMessage("§eRun the command again within 5 seconds to confirm.");
+
+			sure = true;
+			Bukkit.getScheduler().runTaskLater(tempfly, () -> sure = false, 100);
+			return;
+		}
+
+		if (!tempfly.getDataBridge().hasDatabaseEnabled()) {
+			s.sendMessage("§cYou must enable a database option in the config to migrate data!");
+			return;
+		}
+
+		try {
+			tempfly.getDataBridge().openMigrationConnection();
+		} catch (Exception e) {
+			s.sendMessage("§cFailed to open migration SQL connection!");
+			e.printStackTrace();
+			return;
+		}
+
+		File dataf = new File(tempfly.getDataFolder(), "data.yml");
+		if (!dataf.exists()) {
+			s.sendMessage("§cThere is no data.yml to migrate...");
+			tempfly.getDataBridge().closeMigrationConnection();
+			return;
+		}
+
+		FileConfiguration data = new YamlConfiguration();
+		try {
+			data.load(dataf);
+		} catch (Exception e) {
+			s.sendMessage("§cThere is a problem inside data.yml!");
+			e.printStackTrace();
+			tempfly.getDataBridge().closeMigrationConnection();
+			return;
+		}
+
+		ConfigurationSection csPlayers = data.getConfigurationSection("players");
+		if (csPlayers == null) {
+			s.sendMessage("§cThere is no player data to migrate...");
+			tempfly.getDataBridge().closeMigrationConnection();
+			return;
+		}
+
+		List<String> players = new ArrayList<>(csPlayers.getKeys(false));
+		int total = players.size();
+		if (total == 0) {
+			s.sendMessage("§cNo players found in data.yml.");
+			tempfly.getDataBridge().closeMigrationConnection();
+			return;
+		}
+
+		s.sendMessage("§eStarting migration of " + total + " players...");
+
+		int migrated = 0;
+		int failed = 0;
+
+		// ---- Migration loop ----
+		for (int i = 0; i < total; i++) {
+			String uuid = players.get(i);
+
+			// 1) Create row (only for SQL databases, MongoDB auto-creates documents)
+			if (tempfly.getDataBridge().hasSqlEnabled() || tempfly.getDataBridge().hasSqliteEnabled()) {
+				try (PreparedStatement stCreate =
+							 tempfly.getDataBridge()
+									 .prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)")) {
+					stCreate.setString(1, uuid);
+					stCreate.execute();
+				} catch (SQLException e) {
+					failed++;
+					Console.warn("Failed to create DB entry for " + uuid);
 					e.printStackTrace();
 					continue;
 				}
-	 	    }
-	    }
-	    
-	    String statement = "U";
-	  
-	}
+			}
 
+			// 2) Update values
+			for (DataValue value : DataValue.values()) {
+				if (value.getTable() != DataTable.TEMPFLY_DATA) continue;
+
+				StringBuilder path = new StringBuilder();
+				int index = 0;
+				for (String part : value.getYamlPath()) {
+					if (path.length() > 0) path.append(".");
+					path.append(part);
+					if (index < 1) path.append(".").append(uuid);
+					index++;
+				}
+
+				Object obj = data.get(path.toString());
+				if (obj == null) continue;
+
+				// Use DataBridge.setValue() which works for all database types
+				try {
+					String[] pathArray = new String[] { uuid };
+					DataBridge.StagedChange change = 
+						new DataBridge.StagedChange(value, obj, pathArray, null);
+					tempfly.getDataBridge().setValue(change, false);
+				} catch (Exception e) {
+					Console.warn("Migration error for " + uuid + " on " + value.name());
+					e.printStackTrace();
+				}
+			}
+
+			migrated++;
+
+			// Progress bar
+			int percent = (int) ((migrated / (double) total) * 100);
+			StringBuilder bar = new StringBuilder("[");
+			int filled = percent / 2; // 50 character max
+			for (int j = 0; j < 50; j++) bar.append(j < filled ? "=" : " ");
+			bar.append("] ").append(percent).append("%");
+			Console.info(bar.toString());
+		}
+
+		tempfly.getDataBridge().closeMigrationConnection();
+
+		s.sendMessage("§a-------------------------------------");
+		s.sendMessage("§aMigration finished!");
+		s.sendMessage("§aPlayers migrated: §f" + migrated);
+		s.sendMessage("§cPlayers failed: §f" + failed);
+		s.sendMessage("§a-------------------------------------");
+	}
 }

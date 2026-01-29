@@ -150,9 +150,9 @@ public class CmdDisplay extends TempFlyCommand {
     tempfly.getDataBridge().stageChange(pointer, newState);
 
     if (isSelf) {
-      s.sendMessage(V.displaySelfSuccess);
+      U.m(s, V.displaySelfSuccess);
     } else {
-      s.sendMessage(V.displayOtherSuccess.replace("{PLAYER}", args[2]));
+      U.m(s, V.displayOtherSuccess.replace("{PLAYER}", args[2]));
     }
   }
 

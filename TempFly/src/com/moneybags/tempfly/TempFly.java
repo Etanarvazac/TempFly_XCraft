@@ -155,6 +155,7 @@ public class TempFly extends JavaPlugin {
 		flight.onDisable();
 		gui.endAllSessions();
 		bridge.commitAll();
+		bridge.shutdown();
 	}
 	
 	/*
@@ -167,6 +168,7 @@ public class TempFly extends JavaPlugin {
 		bridge.commitAll();
 		Files.createFiles(this);
 		V.loadValues();
+		initializeAesthetics();
 		initializeGui();
 		
 		flight.onTempflyReload();

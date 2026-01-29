@@ -33,12 +33,11 @@ general:
     display_other: "{PREFIX} &cYou cannot turn on/off another players flight timer display!"
     display_self: "{PREFIX} &cYou cannot turn on/off your flight timer display!"
     display_state: "{PREFIX} &cInvalid state. Please use &aon&c, &aenable&c, &4off&c, or &4disable&c."
-    display_self_success: "{PREFIX} &aYour flight timer has been toggled."
-    display_other_success: "{PREFIX} &aFlight timer visibility for &f{PLAYER}."
     number: "{PREFIX} &f{NUMBER} &cis not a valid number!"
     particle: "{PREFIX} &f{PARTICLE} &cis not a valid particle type!"
     player: "{PREFIX} &cThe player &f{PLAYER} &cwas not found..."
     permission: "{PREFIX} &cYou have insufficient permissions..."
+    permission_extended: "{PLAYER} needs the '{PERMISSION}' permission to execute {COMMAND}&c."
     command: "&fUnknown command. Type /help for more information."
     reciever: "{PREFIX} &cYou cannot pay yourself!"
     sender: "{PREFIX} &cOnly players can use this command!"
@@ -66,6 +65,8 @@ general:
     first_join: "{PREFIX} &aYou recieved {FORMATTED_TIME} &aof flight time. Fly with &f/tf&a."
     daily_login: "{PREFIX} &aYou recieved a daily bonus of {FORMATTED_TIME}&a!"
     purchased: "{PREFIX} &aYou purchased {FORMATTED_TIME} &afor &e${COST}&a!"
+    display_self_success: "{PREFIX} &aYour flight timer has been toggled."
+    display_other_success: "{PREFIX} &aFlight timer visibility for &f{PLAYER}."
   
   info:
     header: "&8&m--------&dTime&8&m--------"
@@ -91,6 +92,7 @@ general:
     already_disabled: "{PREFIX} &cYour flight is already disabled!"
     idle_drop: "{PREFIX} &cYou lost flight due to being idle!"
     idle: "{PREFIX} &cYou are now considered idle."
+    infinite_first_use: "{PREFIX} &aInfinite flight has been automatically enabled for first use! To toggle, use &f/tf infinite&a."
     infinite_enabled: "{PREFIX} &aYou enabled your infinite flight!"
     infinite_disabled: "{PREFIX} &cYou disabled your infinite flight!"
     bypass_enabled: "{PREFIX} &aYou enabled flight bypass mode!"
@@ -216,5 +218,3 @@ command:
   sql_error:
     generic: "{PREFIX} &cDatabase error occurred."
     pointer: "{PREFIX} &cDatabase error: Could not get pointer value."
-
-    

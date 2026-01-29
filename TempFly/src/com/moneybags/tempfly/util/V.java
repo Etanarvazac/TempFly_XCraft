@@ -26,6 +26,7 @@ public class V {
 	// Invalid Messages
 	invalidParticle,
 	invalidPermission,
+	invalidPermissionExtended,
 	invalidPlayer,
 	invalidNumber,
 	invalidTimeSelf,
@@ -87,6 +88,7 @@ public class V {
 	flySpeedLimitOther,
 	flyAlreadyEnabled,
 	flyAlreadyDisabled,
+	flyInfiniteFirstUse,
 	flyInfiniteEnabled,
 	flyInfiniteDisabled,
 	flyBypassEnabled,
@@ -178,6 +180,7 @@ public class V {
 	autoFly,
 	autoFlyTimeReceived,
 	actionBar,
+	actionBarDefault,
 	timeDecay,
 	flightToggle,
 	hideVanish,
@@ -234,24 +237,25 @@ public class V {
 		reload 				= st(C.LANG, "system.reload");
 		
 		// Invalid Messages
-		invalidParticle		= st(C.LANG, "general.invalid.particle");
-		invalidPermission	= st(C.LANG, "general.invalid.permission");
-		invalidPlayer		= st(C.LANG, "general.invalid.player");
-		invalidNumber		= st(C.LANG, "general.invalid.number");
-		invalidSender		= st(C.LANG, "general.invalid.sender");
-		invalidTarget       = st(C.LANG, "general.invalid.target");
-		invalidSenderConsole = st(C.LANG, "general.invalid.sender_console");
-		invalidCommand		= st(C.LANG, "general.invalid.command");
-		invalidTimeOther	= st(C.LANG, "general.invalid.time_other");
-		invalidTimeSelf		= st(C.LANG, "general.invalid.time_self");
-		invalidDisplaySelf	= st(C.LANG, "general.invalid.display_self");
-		invalidDisplayOther	= st(C.LANG, "general.invalid.display_other");
-		invalidDisplayState	= st(C.LANG, "general.invalid.display_state");
-		invalidReciever		= st(C.LANG, "general.invalid.reciever");
-		invalidFlyerSelf	= st(C.LANG, "general.invalid.flyer_self");
-		invalidFunds		= st(C.LANG, "general.invalid.funds");
-		invalidEconomy		= st(C.LANG, "general.invalid.economy");
-		vaultPermsRequired  = st(C.LANG, "general.invalid.vault_perms");
+		invalidParticle		      = st(C.LANG, "general.invalid.particle");
+		invalidPermission	      = st(C.LANG, "general.invalid.permission");
+		invalidPermissionExtended = st(C.LANG, "general.invalid.permission_extended");
+		invalidPlayer		      = st(C.LANG, "general.invalid.player");
+		invalidNumber		      = st(C.LANG, "general.invalid.number");
+		invalidSender		      = st(C.LANG, "general.invalid.sender");
+		invalidTarget             = st(C.LANG, "general.invalid.target");
+		invalidSenderConsole      = st(C.LANG, "general.invalid.sender_console");
+		invalidCommand		      = st(C.LANG, "general.invalid.command");
+		invalidTimeOther	      = st(C.LANG, "general.invalid.time_other");
+		invalidTimeSelf		      = st(C.LANG, "general.invalid.time_self");
+		invalidDisplaySelf	      = st(C.LANG, "general.invalid.display_self");
+		invalidDisplayOther	      = st(C.LANG, "general.invalid.display_other");
+		invalidDisplayState	      = st(C.LANG, "general.invalid.display_state");
+		invalidReciever		      = st(C.LANG, "general.invalid.reciever");
+		invalidFlyerSelf	      = st(C.LANG, "general.invalid.flyer_self");
+		invalidFunds		      = st(C.LANG, "general.invalid.funds");
+		invalidEconomy		      = st(C.LANG, "general.invalid.economy");
+		vaultPermsRequired        = st(C.LANG, "general.invalid.vault_perms");
 		
 		// Timer Messages
 		timeGivenOther		= st(C.LANG, "general.time.given_other");
@@ -285,8 +289,8 @@ public class V {
 		infoSeconds			= st(C.LANG, "general.info.seconds");
 		infoFooter			= st(C.LANG, "general.info.footer");
 		infoInfinite		= st(C.LANG, "general.info.infinite");
-		displaySelfSuccess   = st(C.LANG, "general.display_self_success");
-		displayOtherSuccess  = st(C.LANG, "general.display_other_success");
+		displaySelfSuccess   = st(C.LANG, "general.time.display_self_success");
+		displayOtherSuccess  = st(C.LANG, "general.time.display_other_success");
 		
 		// Fly Messages
 		flyEnabledOther	    = st(C.LANG, "general.fly.enabled_other");
@@ -300,6 +304,7 @@ public class V {
 		flySpeedDenied		= st(C.LANG, "general.fly.speed_restricted");
 		flyAlreadyEnabled	= st(C.LANG, "general.fly.already_enabled");
 		flyAlreadyDisabled	= st(C.LANG, "general.fly.already_disabled");
+		flyInfiniteFirstUse = st(C.LANG, "general.fly.infinite_first_use");
 		flyInfiniteEnabled	= st(C.LANG, "general.fly.infinite_enabled");
 		flyInfiniteDisabled	= st(C.LANG, "general.fly.infinite_disabled");
 		flyBypassEnabled	= st(C.LANG, "general.fly.bypass_enabled");
@@ -438,6 +443,7 @@ public class V {
 		damageStruct		= config.getBoolean("general.damage.structure_proximity");
 		
 		actionBar			= config.getBoolean("aesthetic.action_bar.enabled");
+		actionBarDefault	= config.getBoolean("aesthetic.action_bar.default", true);
 		
 		double legacyBonus 	= config.getDouble("general.bonus.daily_login");
 		if (legacyBonus == 0) {

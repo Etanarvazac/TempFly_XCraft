@@ -58,7 +58,8 @@ public class FlightUser {
 	
 	private boolean
 	enabled, autoEnable,
-	infinite = true,
+	infinite = false,
+	infiniteFirstUse = true,
 	bypass = true;
 	
 	private int
@@ -74,7 +75,7 @@ public class FlightUser {
 	selectedSpeed = -999;
 	
 	public FlightUser(Player p, FlightManager manager,
-			double time, String particle, boolean infinite, boolean bypass, boolean logged, boolean compatLogged,
+			double time, String particle, boolean infinite, boolean infiniteFirstUse, boolean bypass, boolean logged, boolean compatLogged,
 			double selectedSpeed) {
 		this.manager = manager;
 		this.timeManager = manager.getTempFly().getTimeManager();
@@ -83,6 +84,7 @@ public class FlightUser {
 		this.time = time;
 		this.particle = particle;
 		this.infinite = infinite;
+		this.infiniteFirstUse = infiniteFirstUse;
 		this.bypass = bypass;
 		this.selectedSpeed = selectedSpeed;
 		
@@ -148,6 +150,7 @@ public class FlightUser {
 				DataPointer.of(DataValue.PLAYER_COMPAT_FLIGHT_LOG, u),
 				DataPointer.of(DataValue.PLAYER_TRAIL, u),
 				DataPointer.of(DataValue.PLAYER_INFINITE, u),
+				DataPointer.of(DataValue.PLAYER_INFINITE_FIRST_USE, u),
 				DataPointer.of(DataValue.PLAYER_BYPASS, u),
 				DataPointer.of(DataValue.PLAYER_SPEED, u));
 	}
@@ -229,7 +232,23 @@ public class FlightUser {
 	public boolean hasInfiniteFlight() {
 		return (p.hasPermission("tempfly.infinite") && infinite) || environment.hasInfiniteFlight();
 	}
-	
+
+	/**
+	 * @return true if the user is using infinite flight for the first time.
+	 */
+	public boolean isInfiniteFirstUse() {
+		return infiniteFirstUse;
+	}
+
+	/**
+	 * Set whether the user is using infinite flight for the first time. This has no effect if they do not have the permission tempfly.infinite
+	 * @param enable enable infinite flight first use?
+	 */
+	public void setInfiniteFirstUse(boolean enable) {
+		manager.getTempFly().getDataBridge().stageChange(DataPointer.of(DataValue.PLAYER_INFINITE_FIRST_USE, p.getUniqueId().toString()), enable);
+		this.infiniteFirstUse = enable;
+	}
+
 	/**
 	 * Set whether the user has infinite flight enabled. This has no effect if they do not have the permission tempfly.infinite
 	 * @param enable enable infinite flight?
@@ -761,7 +780,10 @@ public class FlightUser {
 				Console.debug("--| Action bar visibility is null for user, defaulting to true.");
 				manager.getTempFly().getDataBridge().stageChange(
 						DataPointer.of(DataValue.PLAYER_DISPLAY_VISIBLE, p.getUniqueId().toString()), true);
-			} else if (!isVisible) {
+				// Continue to display the action bar with default value
+				isVisible = true;
+			}
+			if (!isVisible) {
 				Console.debug("--| Action bar is not visible for user because display is disabled.");
 				return;
 			}
@@ -944,7 +966,7 @@ public class FlightUser {
 	 */
 	public class GroundTimer extends TempFlyTimer {
 		
-		private static final int DELAY = 3;
+		private static final int DELAY = 20;
 		
 		public GroundTimer() {
 			Console.debug("--- new ground timer ---");
@@ -985,17 +1007,16 @@ public class FlightUser {
 	// It looks like were having spaghetti for dinner
 	public class FlightTimer extends TempFlyTimer {
 		
-		private static final int DELAY = 3;
+		private static final int DELAY = 20;
 		
 		private boolean previouslyFlying;
 		
 		public FlightTimer() {
 			Console.debug("--- new flight timer--- ");
 			this.runTaskTimer(manager.getTempFly(), 0, DELAY);
-			if (doFlightTimer() && V.actionBar && !hasInfiniteFlight() && time > 0) {
-				doActionBar();
-			}
-		}
+		Console.debug("--| Checking ActionBar conditions: doFlightTimer=" + doFlightTimer() + ", V.actionBar=" + V.actionBar + ", hasInfiniteFlight=" + hasInfiniteFlight() + ", time=" + time);
+		if (doFlightTimer() && V.actionBar && !hasInfiniteFlight() && time > 0) {
+			Console.debug("--| Calling doActionBar() from FlightTimer constructor");}}
 		
 		@Override
 		public void run() {
@@ -1015,13 +1036,7 @@ public class FlightUser {
 				return;
 			}
 			
-			accumulativeCycle += DELAY * 50;
-			if (accumulativeCycle >= 1000) {
-				accumulativeCycle = 0;
-				executeTimer();
-				return;
-			}
-			
+			executeTimer();
 		}
 		
 		@Override
@@ -1045,11 +1060,11 @@ public class FlightUser {
 					TitleAPI.sendTitle(p, 15, 30, 15, timeManager.regexString(V.warningTitle, time),
 							timeManager.regexString(V.warningSubtitle, time));
 				}
-				if (V.actionBar) {doActionBar();}
-				
-				if (time == 0) {
-					timeExpired();
-				}
+			Console.debug("--| Checking ActionBar in executeTimer: V.actionBar=" + V.actionBar);
+			if (V.actionBar) {
+				Console.debug("--| Calling doActionBar() from executeTimer");
+				doActionBar();
+			}
 			} else if (enabled) {
 				timeExpired();
 			}

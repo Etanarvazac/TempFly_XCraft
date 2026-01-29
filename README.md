@@ -17,7 +17,7 @@ Tempfly is a highly configurable Spigot/Bukkit plugin for Minecraft that introdu
     - ...a player is standing on the ground with flight enabled
     - ...a player is in Creative or Spectator Modes
 - Regular Backups
-- SQL support
+- Database options: MySQL, MongoDB, and SQLite. YAML will be defaulted if no database is enabled.
 - Aesthetics:
   - Flight Indicator - Player names in TAB and their tags can have text added to indicate they have Fly Time active (flying players without fly time will not have this indicator). Players will soon be able to toggle this on and off with "/tf display on/off".
   - Particles - Players can have particle trails while flying

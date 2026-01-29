@@ -35,8 +35,15 @@ jobs:
       - name: Build with Maven
         run: mvn -f ./TempFly/pom.xml clean package
 
-      - name: Upload JAR
+      - name: Upload Shaded JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.userSuffix }}-shaded
+          path: /home/runner/work/TempFly_XCraft/TempFly_XCraft/TempFly/target/*-shaded.jar
+
+      - name: Upload Non-Shaded JAR
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.userSuffix }}
-          path: /home/runner/work/TempFly_XCraft/TempFly_XCraft/TempFly/target/*.jar
+          path: /home/runner/work/TempFly_XCraft/TempFly_XCraft/TempFly/target/TempFly-*.jar
+          if-no-files-found: warn

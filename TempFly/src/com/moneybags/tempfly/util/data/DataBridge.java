@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,14 +17,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.zip.DataFormatException;
 
+import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -29,8 +32,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.util.Console;
-import com.moneybags.tempfly.util.U;
-import com.moneybags.tempfly.util.V;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -39,6 +43,10 @@ public class DataBridge implements DataFileHolder {
 
 	private TempFly tempfly;
 	private MysqlDataSource dataSource;
+	private MongoClient mongoClient;
+	private MongoDatabase mongoDatabase;
+	private Connection sqliteConnection;
+	private Connection migrationConnection = null;
 	
 	private File dataf;
 	private FileConfiguration data;
@@ -59,8 +67,21 @@ public class DataBridge implements DataFileHolder {
 		return dataSource;
 	}
 	
+	public boolean hasDatabaseEnabled() {
+		return dataSource != null || mongoClient != null || sqliteConnection != null;
+	}
+
+	// Helpers for checking specific database types
 	public boolean hasSqlEnabled() {
 		return dataSource != null;
+	}
+
+	public boolean hasMongoEnabled() {
+		return mongoClient != null;
+	}
+
+	public boolean hasSqliteEnabled() {
+		return sqliteConnection != null;
 	}
 	
 	public boolean connectSql() throws SQLException {
@@ -79,16 +100,90 @@ public class DataBridge implements DataFileHolder {
 		
 	    try (Connection conn = dataSource.getConnection()) {
 	        if (!conn.isValid(1)) {
-	        	Console.severe("Could not establish a connection to the database!");
+	        	Console.severe("Could not establish a connection to MySQL database!");
 	            return false;
-	        }
+	        } else {
+				Console.info("Successfully connected to MySQL database!");
+			}
 	    } 
 	    
 	    this.dataSource = dataSource;
 	    return true;
 	}
+
+	public boolean connectMongo() {
+		try {
+			// Grab config values...
+			String host = Files.config.getString("system.mongodb.host");
+			int port = Files.config.getInt("system.mongodb.port");
+			String name = Files.config.getString("system.mongodb.name");
+			String user = Files.config.getString("system.mongodb.user");
+			String pass = Files.config.getString("system.mongodb.pass");
+			String authDb = Files.config.getString("system.mongodb.auth_database", "admin");
+
+			// ...and encode user and pass, with special character handling...
+			String encodedUser = URLEncoder.encode(user, StandardCharsets.UTF_8.toString());
+			String encodedPass = URLEncoder.encode(pass, StandardCharsets.UTF_8.toString());
+
+			// ...and now build the connection string.
+			String connectionString;
+			if (user != null && !user.isEmpty() && pass != null && !pass.isEmpty()) {
+				// Authenticated connection string
+				connectionString = String.format("mongodb://%s:%s@%s:%d/%s?authSource=%s",
+					encodedUser, encodedPass, host, port, name, authDb);
+			} else {
+				// Non-authenticated connection string
+				connectionString = String.format("mongodb://%s:%d/%s", host, port, name);
+			}
+
+
+			mongoDatabase.listCollectionNames().first();
+			Console.info("Successfully connected to MongoDB database!");
+			return true;
+		} catch (UnsupportedEncodingException e) {
+			Console.severe("Failed to encode MongoDB credentials! Reason: Unsupported encoding.");
+			e.printStackTrace();
+			return false;
+		} catch (Exception e) {
+			Console.severe("Could not establish a connection to MongoDB database!");
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean connectSqlite() {
+		try {
+			// Get path from config, defaulting to 'data.db' if not set.
+			String filePath = Files.config.getString("system.sqlite.file_path", "data.db");
+
+			// Let's create the file in the chosen location...
+			File dbFile = new File(tempfly.getDataFolder(), filePath);
+
+			// ..and double check for the parent directory.
+			dbFile.getParentFile().mkdirs();
+
+			// Now let's build JDBC for SQlite...
+			String jdbcUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
+
+			// ...create the connection...
+			this.sqliteConnection = java.sql.DriverManager.getConnection(jdbcUrl);
+
+			// ...and verify connection to the database.
+			if (!sqliteConnection.isValid(1)) {
+				Console.severe("Could not establish a connection to SQLite database!");
+				return false;
+			} else {
+				Console.info("Successfully connected to SQLite database!");
+			}
+			return true;
+		} catch (SQLException e) {
+			Console.severe("Could not establish a connection to SQLite database!");
+			e.printStackTrace();
+			return false;
+		}
+	}
 	
-	private void initDb() throws IOException, SQLException {
+	private void initMySqlDb() throws IOException, SQLException {
 	    String setup;
 	    try (InputStream in = tempfly.getResource("dbsetup.sql")) {
 	        setup = new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
@@ -101,17 +196,68 @@ public class DataBridge implements DataFileHolder {
 	            stmt.execute();
 	        } 
 	    }
-	    Console.info("§2Database setup complete.");
+	    Console.info("§2MySQL setup complete.");
+	}
+
+	private void initMongoDB () {
+		try {
+			// MongoDB automatically creates collections, but we want to ensure it exists and index it
+			String collectionName = "tempfly_data";
+			
+			// Now let's verify it. IF it fails, then we'll create one
+			boolean collectionExists = false;
+			for (String name : mongoDatabase.listCollectionNames()) {
+				if (name.equals(collectionName)) {
+					collectionExists = true;
+					break;
+				}
+			}
+
+			if (!collectionExists) {
+				mongoDatabase.createCollection(collectionName);
+			}
+
+			// Create index of UUID's field for faster lookups
+			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+			collection.createIndex(new Document("uuid", 1));
+
+			Console.info("MongoDB setup complete.");
+		} catch (Exception e) {
+			Console.severe("MongoDB setup failed.");
+			e.printStackTrace();
+		}
+	}
+
+	private void initSqlite() throws IOException, SQLException {
+		String setup;
+		try (InputStream in = tempfly.getResource("dbsetup.sql")) {
+			setup = new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
+		}
+		String[] queries = setup.split(";");
+		for (String query : queries) {
+			if (query.isBlank()) continue;
+			try (PreparedStatement stmt = sqliteConnection.prepareStatement(query)) {
+				stmt.execute();
+			}
+		}
+		Console.info("SQLite setup complete.");
 	}
 	
 	public DataBridge(TempFly tempfly) throws IOException, SQLException {
 		this.tempfly = tempfly;
+		// Try each database based on priority order: MySQL > MongoDB > SQLite
 		if (Files.config.getBoolean("system.mysql.enabled")) {
 			connectSql();
-			initDb();
+			initMySqlDb();
+		} else if (Files.config.getBoolean("system.mongodb.enabled")) {
+			connectMongo();
+			initMongoDB();
+		} else if (Files.config.getBoolean("system.sqlite.enabled")) {
+			connectSqlite();
+			initSqlite();
 		}
 		
-		// If connection is null we will default to yaml storage.
+		// If database connection could not be established, fall back to YAML file.
 		if (!hasSqlEnabled()) {
 			dataf = new File(tempfly.getDataFolder(), "data.yml");
 		    if (!dataf.exists()){
@@ -120,7 +266,7 @@ public class DataBridge implements DataFileHolder {
 		    }
 		    data = new YamlConfiguration();  
 		    try { data.load(dataf); } catch (Exception e1) {
-		    	Console.severe("There is a problem inside the data.yml, If you cannot fix the issue, please contact the developer.");
+		    	Console.severe("There is a problem inside data.yml!");
 		        e1.printStackTrace();
 		    }
 		    formatYamlData(tempfly);
@@ -136,7 +282,7 @@ public class DataBridge implements DataFileHolder {
 	private void formatYamlData(TempFly plugin) {
 		double version = data.getDouble("version", 0.0);
 		if (version < 2.0) {
-			Console.warn("Your data file needs to update to support the current version. Updating to version 2.0 now...");
+			Console.warn("Updating data.yml to version 2.0...");
 			if (!backupLegacyData("update_2_backup_")) {
 				Bukkit.getPluginManager().disablePlugin(plugin);
 				return;
@@ -167,7 +313,6 @@ public class DataBridge implements DataFileHolder {
 			saveData();
 			
 		} else if (version < 3.0) {
-			Console.warn("", "This tempfly version has a new data management system, (data.yml) will be backed for your safety.", "");
 			if (!backupLegacyData("update_3_backup_")) {
 				Bukkit.getPluginManager().disablePlugin(plugin);
 				return;
@@ -213,10 +358,6 @@ public class DataBridge implements DataFileHolder {
 	public void stageChange(DataPointer pointer, Object data, DataFileHolder fileHolder) {
 		DataValue value = pointer.getValue();
 		String[] path = pointer.getPath();
-		if (V.debug) {//Console.debug(""); Console.debug("-----------Staging new change-----------"); Console.debug("--| Type: " + value.toString()); Console.debug("--| Path: " + U.arrayToString(pointer.getPath(), " | ")); Console.debug("--| Data: " + String.valueOf(data));
-		}
-		
-		
 		changes.put(pointer, new StagedChange(value, data, path, fileHolder));
 	}
 	
@@ -229,7 +370,6 @@ public class DataBridge implements DataFileHolder {
 	 * Adds all the staged changes to the manual batch and runs the async batch collector.
 	 */
 	public void commitAll() {
-		Console.debug("", "--------> DataBridge Commit <--------", "--|>> Adding (ALL) changes to the commit queue");
 		manualCommit.clear();
 		manualCommit.addAll(changes.keySet());
 		if (manualCommit.size() == 0) {
@@ -246,32 +386,21 @@ public class DataBridge implements DataFileHolder {
 	private void executeCommit() {
 		List<StagedChange> commit = new ArrayList<>();
 		
-		if (V.debug) {Console.debug("", "-|>>>>> Preparing to execute the commit queue");}
-		
 		List<DataPointer> pl = new ArrayList<>();
 		pl.addAll(manualCommit);
 		manualCommit.clear();
 		
-		pointers:
 		for (DataPointer pointer: pl) {
-			if (V.debug) {Console.debug("", "--| Looking for data type:" + pointer.getValue().toString(), "--| Path:" + U.arrayToString(pointer.getPath(), " | "));}
-			Console.debug("looking for: " + pointer.hashCode());
 			StagedChange change = changes.get(pointer);
 			if (change != null) {
-				Console.debug("--|> Found a staged change that matches: data=(" + change.getData() + ")");
 				commit.add(change);
 				changes.remove(pointer);
-				continue pointers;
 			}
- 			Console.debug("--|> No changes to save for this type...");
 		}	
 		
-		
-		if (commit.size() == 0 && V.debug) { Console.debug(">>>>> No changes to save...", "-----------End commit---------", "");
+		if (commit.size() == 0) {
 			return;
 		}
-		
-		if (V.debug) { Console.debug("Preparing to set value for (" + String.valueOf(commit.size()) + ") change" + (commit.size() > 1 ? "s" : "") + " found...");}
 		List<DataFileHolder> altered = new ArrayList<>();
 		for (StagedChange change: commit) {
 			DataFileHolder holder = change.getValue().getTable().getDataFileHolder(tempfly);
@@ -281,16 +410,18 @@ public class DataBridge implements DataFileHolder {
 			try {
 				setValue(change, holder.forceYaml());
 			} catch (SQLException e) {
+				// SQL-based exceptions, since these are more detailed.
 				e.printStackTrace();
-				continue;
+			} catch (Exception e) {
+				// All other exceptions, for MongoDB or YAML.
+				e.printStackTrace();
 			}
 		}
 		for (DataFileHolder holder: altered) {
-			if (!hasSqlEnabled() || holder.forceYaml()) {
+			if (!hasDatabaseEnabled() || holder.forceYaml()) {
 				holder.saveData();
 			}
 		}
-		Console.debug("-----------End commit---------", "");
 	}
 	
 	/**
@@ -299,7 +430,6 @@ public class DataBridge implements DataFileHolder {
 	 */
 	public void manualCommit(DataPointer... pointers) {
 		manualCommit.addAll(Arrays.asList(pointers));
-		Console.debug(manualCommit.toString());
 		executor.submit(() -> {
 			executeCommit();
 		});
@@ -324,43 +454,52 @@ public class DataBridge implements DataFileHolder {
 	public Object getValue(DataPointer pointer) throws SQLException {
 		DataValue value = pointer.getValue();
 		String[] path = pointer.getPath();
-		if (V.debug) {Console.debug("", "-----Data Bridge Get Value-----", "--| Type: " + value.toString(), "--| Path: " + U.arrayToString(pointer.getPath(), " | "));	}
 		
-		Console.debug("--| Checking local staged changes");
-		
+		// Let's first check for changes.
 		StagedChange change = changes.get(pointer);
 		if (change != null) {
-			Console.debug("--|> found cached value... Returning local data!");
 			return change.getData();
 		}
-		Console.debug("--|> No local data found, prepare for data retrieval!");
 		
-		if (!hasSqlEnabled()) {
-			Console.debug("--| Using YAML");
-			int index = 0;
-			StringBuilder sb = new StringBuilder();
-			for (String s: value.getYamlPath()) {
-				sb.append((sb.length() > 0 ? "." : "") + s);
-				if (path.length > index) {
-					sb.append("." + path[index]);
+		// Since there was, let's get the data from the correct storage.
+		if (hasSqlEnabled() || hasSqlEnabled()) {
+			// MySQL or SQLite reading operation
+			DataTable table = value.getTable();
+			String statement = "SELECT " + value.getSqlColumn() + " FROM " + table.getSqlTable()
+					+ " WHERE " + table.getPrimaryKey() + " = ?";
+			try (PreparedStatement st = prepareStatement(statement)) {
+				st.setString(1, path[0]);
+				ResultSet sresult = st.executeQuery();
+				if (sresult.next()) {
+					return sresult.getObject(value.getSqlColumn());
 				}
-				index++;
+			}
+		} else if (hasMongoEnabled()) {
+			// MongoDB reading operation
+			String collectionName = value.getTable().getSqlTable();
+			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+
+			Document filterDoc = new Document(value.getTable().getPrimaryKey(), path[0]);
+			Document mresult = collection.find(filterDoc).first();
+
+			if (mresult != null) {
+				return mresult.get(value.getSqlColumn());
+			}
+		} else {
+			// YAML reading operation
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < value.getYamlPath().length; i++) {
+				String s = value.getYamlPath()[i];
+				if (sb.length() > 0) {
+					sb.append(".");
+				}
+				sb.append(s);
+				// Insert path elements between yamlPath segments
+				if (i < path.length) {
+					sb.append(".").append(path[i]);
+				}
 			}
 			return value.getTable().getDataFileHolder(tempfly).getDataConfiguration().get(sb.toString());
-		} else {
-			Console.debug("--| Using SQL");
-			DataTable table = value.getTable();
-			
-			
-			String statement = "SELECT " + value.getSqlColumn() + " FROM " + table.getSqlTable() + " WHERE " + table.getPrimaryKey() + " = ?";
-			Console.debug(statement);
-			try (PreparedStatement st = dataSource.getConnection().prepareStatement(statement)) {
-				st.setString(1, path[0]);
-				ResultSet result = st.executeQuery();
-		        if (result.next()) {
-		            return result.getObject(value.getSqlColumn());
-		        }
-			}
 		}
 		return null;
 	}
@@ -370,11 +509,19 @@ public class DataBridge implements DataFileHolder {
 			return null;
 		}
 		try {
-			return getDataSource().getConnection().prepareStatement(statement);
+			if (migrationConnection != null && !migrationConnection.isClosed())
+				return migrationConnection.prepareStatement(statement);
+
+			// Check which SQL method
+			if (hasSqlEnabled()) {
+				return dataSource.getConnection().prepareStatement(statement);
+			} else if (hasSqliteEnabled()) {
+				return sqliteConnection.prepareStatement(statement);
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null;
 		}
+		return null;
 	}
 	
 	public Object getOrDefault(DataPointer pointer, Object def) {
@@ -385,7 +532,6 @@ public class DataBridge implements DataFileHolder {
 			e.printStackTrace();
 			return def;
 		}
-		if (V.debug) {Console.debug("", "-----Data Bridge Get or Default Value-----", "--|> Got: " + object, "--|> Returning: " + String.valueOf(object == null ? def : object));}
 		return object == null ? def : object;
 	}
 	
@@ -403,18 +549,68 @@ public class DataBridge implements DataFileHolder {
 	
 	public Map<String, Object> getValues(DataTable table, DataFileHolder fileHolder, String yamlPathTo, String row, String... extra) {
 		Map<String, Object> values = new HashMap<>();
-		if (!hasSqlEnabled() || fileHolder.forceYaml()) {
+
+		// Let's first see which storage we are using.
+		if ((hasSqlEnabled() || hasSqliteEnabled()) && (fileHolder == null || !fileHolder.forceYaml())) {
+			// MySQL or SQLite reading operation
+			// Will implement after remaining code is done.
+			String statement = "SELECT * FROM " + table.getSqlTable()
+					+ " WHERE " + table.getPrimaryKey() + " = ?";
+			try (PreparedStatement st = prepareStatement(statement)) {
+				st.setString(1, row);
+				ResultSet result = st.executeQuery();
+				if (result.next()) {
+					// Get every column from results
+					java.sql.ResultSetMetaData rsmd = result.getMetaData();
+					int columnCount = rsmd.getColumnCount();
+
+					for (int i = 1; i <= columnCount; i++) {
+						String columnName = rsmd.getColumnName(i);
+						// We'll skip the primary key, which is usually the UUID
+						if (!columnName.equals(table.getPrimaryKey())) {
+							values.put(columnName, result.getObject(columnName));
+						}
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		} else if (hasMongoEnabled() && (fileHolder == null || !fileHolder.forceYaml())) {
+			// MongoDB reading operation
+			String collectionName = table.getSqlTable();
+			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+
+			Document filterDoc = new Document(table.getPrimaryKey(), row);
+			Document result = collection.find(filterDoc).first();
+
+			if (result != null) {
+				// Iterate through keys and exclude the "_id" field
+				for (String key : result.keySet()) {
+					if (!key.equals("_id")) {
+						values.put(key, result.get(key));
+					}
+				}
+			}
+		} else {
+			// YAML reading operation
 			FileConfiguration df = fileHolder == null ?
 					table.getDataFileHolder(tempfly).getDataConfiguration()
 					: fileHolder.getDataConfiguration();
-			String path = yamlPathTo + "." + row + "." + U.arrayToString(extra, ".");
+			StringBuilder pathBuilder = new StringBuilder(yamlPathTo).append(".").append(row);
+			for (String e : extra) {
+				pathBuilder.append(".").append(e);
+			}
+			String path = pathBuilder.toString();
 			ConfigurationSection csValues = df.getConfigurationSection(path);
 			if (csValues != null) {
 				for (String key: csValues.getKeys(false)) {
-					values.put(key, df.get(path + "." + key));
-				}		
+					values.put(key, csValues.get(key));
+				}
 			}
 		}
+		
+		
+		// Apply any changes that we've staged locally.
 		for (StagedChange local: changes.values()) {
 			if (local.comparePathPartial(row)) {
 				values.put(local.getPath()[local.getPath().length-1], local.getData());
@@ -426,32 +622,14 @@ public class DataBridge implements DataFileHolder {
 	public void setValue(StagedChange change, boolean forceYaml) throws SQLException {
 		DataValue value = change.getValue();
 		String[] path = change.getPath();
-		if (V.debug) {Console.debug("", "-----Data Bridge Set Value-----", "--| Type: " + value.toString(), "--| Path: " + U.arrayToString(path, " | "));	}
-		if (!hasSqlEnabled() || forceYaml) {
-			int index = 0;
-			StringBuilder sb = new StringBuilder();
-			for (String s: value.getYamlPath()) {
-				sb.append((sb.length() > 0 ? "." : "") + s);
-				if (path.length > index) {
-					sb.append("." + path[index]);
-				}
-				index++;
-			}
-			if (V.debug) {Console.debug("--| Setting yaml value: " + sb.toString(), "--| New data: " + String.valueOf(change.getData()));}
-			FileConfiguration yaml = change.getFileHolder() == null ?
-					value.getTable().getDataFileHolder(tempfly).getDataConfiguration()
-					: change.getFileHolder().getDataConfiguration();
-			if (!yaml.contains(sb.toString())) {
-				yaml.createSection(sb.toString());
-			}
-			yaml.set(sb.toString(), change.getData());
-		} else {
-			Console.debug("UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
-					+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = " + path[0]);
-			PreparedStatement st = dataSource.getConnection().prepareStatement(
-					"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
-					+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
-			Class<?> type = value.getType();
+		
+		// First let's check which storage we are using.
+		if (hasSqlEnabled() || hasSqliteEnabled() && !forceYaml) {
+			// MySQL writing operation
+			PreparedStatement st = prepareStatement(
+			"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
+				+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
+		Class<?> type = value.getType();
 			if (type.equals(Boolean.TYPE)) {
 				st.setBoolean(1, (boolean) change.getData());
 			} else if (type.equals(Double.TYPE)) {
@@ -464,6 +642,38 @@ public class DataBridge implements DataFileHolder {
 			st.setString(2, path[0]);
 			st.execute();
 			st.close();
+
+		} else if (hasMongoEnabled() && !forceYaml) {
+			// MongoDB writing operation
+			// Set up the collection
+			String collectionName = value.getTable().getSqlTable();
+			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
+
+			// Now build the update document
+			Document updateDoc = new Document("$set", new Document(value.getSqlColumn(), change.getData()));
+			Document filterDoc = new Document(value.getTable().getPrimaryKey(), path[0]);
+
+			// Send the update if it exists, otherwise insert a new document
+			collection.updateOne(filterDoc, updateDoc, new com.mongodb.client.model.UpdateOptions().upsert(true));
+
+		} else  {
+			// YAML writing operation
+			int index = 0;
+			StringBuilder sb = new StringBuilder();
+			for (String s: value.getYamlPath()) {
+				sb.append(sb.length() > 0 ? "." : "" + s);
+				if (path.length > index) {
+					sb.append("." + path[index]);
+				}
+				index++;
+			}
+			FileConfiguration yaml = change.getFileHolder() == null ?
+					value.getTable().getDataFileHolder(tempfly).getDataConfiguration()
+					: change.getFileHolder().getDataConfiguration();
+			if (!yaml.contains(sb.toString())) {
+				yaml.createSection(sb.toString());
+			}
+			yaml.set(sb.toString(), change.getData());
 		}
 	}
 
@@ -560,13 +770,17 @@ public class DataBridge implements DataFileHolder {
 				Boolean.TYPE,
 				"display_visible",
 				new String[] {"players", "display_visible"},
+				false),
+		PLAYER_INFINITE_FIRST_USE(
+				DataTable.TEMPFLY_DATA,
+				Boolean.TYPE,
+				"infinite_first_use",
+				new String[] {"players", "infinite_first_use"},
 				false);
-		
 		
 		private DataTable table;
 		private Class<?> type;
-		private String
-		sqlColumn;
+		private String sqlColumn;
 		
 		private String[]
 		yamlPath;
@@ -601,7 +815,7 @@ public class DataBridge implements DataFileHolder {
 		}
 	}
 	
-	protected class StagedChange {
+	public static class StagedChange {
 		DataValue value;
 		String[] path;
 		Object data;
@@ -645,6 +859,75 @@ public class DataBridge implements DataFileHolder {
 		
 	}
 
+	public void openMigrationConnection() throws SQLException {
+		// Only open migration connection for SQL databases (MySQL/SQLite)
+		// MongoDB doesn't need a separate connection
+		if (hasSqlEnabled() || hasSqliteEnabled()) {
+			if (migrationConnection == null || migrationConnection.isClosed()) {
+				if (hasSqlEnabled()) {
+					migrationConnection = dataSource.getConnection();
+				} else if (hasSqliteEnabled()) {
+					migrationConnection = sqliteConnection;
+				}
+			}
+		}
+	}
+
+	public void closeMigrationConnection() {
+		if (migrationConnection != null) {
+			try { migrationConnection.close(); }
+			catch (SQLException e) { e.printStackTrace(); }
+		}
+	}
+
+	// We don't want to leave any data leaks on shutdown or disable, so let's ensure any database connections are closed.
+	// Closure will check each storage in it's priority order and close whichever is active.
+	public void shutdown() {
+		// SYNCHRONOUSLY commit any remaining changes before cleanup - we can't use async during shutdown!
+		// If we use the async commitAll(), the executor might try to execute after the MongoDB client closes.
+		executeCommit();
+		
+		// Now shut down the executor and wait for any lingering tasks
+		executor.shutdown(); // Stop accepting new tasks
+		try {
+			// Wait up to 10 seconds for existing tasks to complete
+			if (!executor.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)) {
+				Console.warn("Executor did not terminate in time, forcing shutdown...");
+				executor.shutdownNow(); // Force shutdown
+			}
+		} catch (InterruptedException e) {
+			Console.warn("Executor shutdown interrupted!");
+			executor.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
+
+		// MySQL cleanup is handled by MySQL itself via connection pooling, which means we don't need to do anything for it.
+
+		// MongoDB cleanup
+		if (mongoClient != null) {
+			try {
+				mongoClient.close();
+				Console.info("MongoDB connection closed.");
+			} catch (Exception e) {
+				Console.warn("Could not close MongoDB connection cleanly! Reason: " + e.getMessage());
+			}
+		}
+
+		// SQLite cleanup
+		if (sqliteConnection != null) {
+			try {
+				sqliteConnection.close();
+				Console.info("SQLite connection closed.");
+			} catch (SQLException e) {
+				Console.warn("Could not close SQLite connection cleanly! Reason: " + e.getMessage());
+			}
+		}
+
+		// YAML cleanup isn't necessary as there's no persistent connection. Simply committing remaining changes is sufficient.
+
+		// Migration cleanup
+		closeMigrationConnection();
+	}
 	@Override
 	public File getDataFile() {
 		return dataf;

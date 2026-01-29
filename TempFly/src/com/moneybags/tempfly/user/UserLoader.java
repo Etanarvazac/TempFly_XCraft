@@ -10,9 +10,10 @@ import org.bukkit.entity.Player;
 import com.moneybags.tempfly.aesthetic.particle.Particles;
 import com.moneybags.tempfly.fly.FlightManager;
 import com.moneybags.tempfly.time.TimeManager;
+import com.moneybags.tempfly.util.V;
 import com.moneybags.tempfly.util.data.DataBridge;
-import com.moneybags.tempfly.util.data.DataPointer;
 import com.moneybags.tempfly.util.data.DataBridge.DataValue;
+import com.moneybags.tempfly.util.data.DataPointer;
 
 public class UserLoader implements Runnable {
 
@@ -32,6 +33,7 @@ public class UserLoader implements Runnable {
 	
 	boolean
 	infinite,
+	infiniteFirstUse,
 	bypass,
 	logged,
 	compatLogged,
@@ -45,7 +47,7 @@ public class UserLoader implements Runnable {
 		final DataBridge bridge = manager.getTempFly().getDataBridge();
 		final TimeManager timeManager = manager.getTempFly().getTimeManager();
 		
-		if (bridge.hasSqlEnabled()) {
+		if (bridge.hasSqlEnabled() || bridge.hasSqliteEnabled()) {
 			PreparedStatement st = bridge.prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)");
 			try {
 				st.setString(1, u.toString());
@@ -61,11 +63,14 @@ public class UserLoader implements Runnable {
 		
 		time = timeManager.getTime(u);
 		particle = Particles.loadTrail(u);
-		infinite = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_INFINITE, u.toString()), true); 
+		infinite = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_INFINITE, u.toString()), false); 
+		infiniteFirstUse = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_INFINITE_FIRST_USE, u.toString()), true);
 		bypass = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_BYPASS, u.toString()), true);
 		logged = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_FLIGHT_LOG, u.toString()), false);
 		compatLogged = (boolean) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_COMPAT_FLIGHT_LOG, u.toString()), false);
 		selectedSpeed = (double) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_SPEED, u.toString()), -999D);
+		// Initialize display visible flag with config default
+		bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_DISPLAY_VISIBLE, u.toString()), V.actionBarDefault);
 		ready = true;
 		if (async) {
 			manager.addUser(Bukkit.getPlayer(u));
@@ -77,11 +82,11 @@ public class UserLoader implements Runnable {
 	}
 	
 	public FlightUser buildUser() {
-		return new FlightUser(Bukkit.getPlayer(u), manager, time, particle, infinite, bypass, logged, compatLogged, selectedSpeed);
+		return new FlightUser(Bukkit.getPlayer(u), manager, time, particle, infinite, infiniteFirstUse, bypass, logged, compatLogged, selectedSpeed);
 	}
 	
 	public FlightUser buildUser(Player p) {
-		return new FlightUser(p, manager, time, particle, infinite, bypass, logged, compatLogged, selectedSpeed);
+		return new FlightUser(p, manager, time, particle, infinite, infiniteFirstUse, bypass, logged, compatLogged, selectedSpeed);
 	}
 	
 

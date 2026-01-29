@@ -7,7 +7,7 @@
 #|                   `--'   `----'`--`--`--'|  |-' `--'    `--'.-'  /                   |# 
 #|                                          `--'               `---'                    |#
 #|                                                                                      |#
-#|                                  Version: 3.1.11                                     |#
+#|                                  Version: 3.2.0                                      |#
 #|                                                                                      |#
 ##--------------------------------------------------------------------------------------##
 #|                                                                                      |#
@@ -42,61 +42,85 @@
 
 
 system:
+  # File Versions: 
+  #   ** DO NOT CHANGE THESE VALUES! **
+  #   These are used internally to ensure your config and lang files are up to date.
+  file_versions:
+    conf: 3.2.0
+    lang: 3.2.0
   # Time in minutes to backup data
   backup: 5
   # If true your console will be subjected to spam from the internal workings of the plugin.
   # If you have an issue i may ask you to turn it on.
   debug: false
   # If true tempfly will not track player regions. This can improve performance but will disable ALL
-  # features of tempfly that rely on regions to function, such as disabled regions, relative time regions etc..
+  #   features of tempfly that rely on regions to function, such as disabled regions, relative time regions etc..
   disable_region_tracking: false
-  # If true this will disable all tab completions for tempfly commands
-  # Can be bypassed with tempfly.disable_tab.bypass
+  # If true this will disable all tab completions for tempfly commands. This can be bypassed with 
+  #   the "tempfly.disable_tab.bypass" permission.
   disable_tab: false
-  # database
+  # Database Settings:
+  #   PRIORITY ORDER - If you enable multiple databases at once, TempFly will prioritize them in this order:
+  #                    MySQL > MongoDB > SQLite > FlatFile ("data.yml" in TempFly's folder). FlatFile will be
+  #                    used if no other database is enabled.
+  #     SHADING NOTE - While MySQL or FlatFile databases will work in both LITE or SHADED versions of TempFly,
+  #                    you will need to either use the SHADED version of TempFly or manually add the respective
+  #                    database drivers to your server for MongoDB or SQLite databases to work.
+  #        BETA NOTE - While MongoDB and SQLite databases are available, they are still in BETA. Please report
+  #                    any issues you may find while using these databases.
   mysql:
     enabled: false
     host: "127.0.0.1"
     port: 3306
-    name: "name"
+    name: "tempfly"
     user: "user"
     pass: "pass"
+  mongodb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 27017
+    name: "tempfly"
+    user: "user"
+    pass: "pass"
+    auth_database: "admin"
+  sqlite:
+    enabled: false
+    file_path: "data.db"
 
 general:
   # This feature prevents conflictions with other plugins fly features.
-  # By default tempfly will steal priority and take the command /fly away from other plugins.
-  # If the player has a permission listed below tempfly will not override the command /fly for them.
+  #   By default tempfly will steal priority and take the command /fly away from other plugins.
+  #   If the player has a permission listed below tempfly will not override the command /fly for them.
   fly_override_permissions:
     - 'essentials.fly'
   
-  # This setting allows you to disable flight in specific worlds or regions.
+  # Blacklist: Any worlds or regions listed here will DISABLE TempFly flight.
   disabled:
     worlds:
       - 'example_world'
     regions:
       - 'example_region'
 
-  # This setting enables you to allow flight only in whitelisted worlds or regions.
+  # Whitelist: Any worlds or regions NOT listed here will DISABLE TempFly flight.
   whitelist:
     worlds:
     # - 'world'
-    
     regions:
     # - 'example_region'
 
   timer:
-    # If true the players timer will count down even when they have flight disabled.
-    # If you want the time to count down while they are offline please see the feature "time_decay"
+    # If TRUE the players timer will count down even when they have flight disabled.
+    # Please see "time_decay" for offline time loss settings.
     constant: false
-    # If false the player will not lose flight time if standing on the ground with flight enabled.
+    # If FALSE the player will not lose flight time if standing on the ground with flight enabled.
     ground: false
-    # If false the player will not lose flight time if they go idle with flight enabled.
+    # If FALSE the player will not lose flight time if they go idle with flight enabled.
     # This will override the constant and ground timers.
     idle: false
-    # If false the timer will not count down while a player uses creative flight.
-    # If true the player will be subject to all normal tempfly flight restrictions and time usage while in creative flight.
+    # If FALSE the timer will not count down while a player uses creative flight.
+    # If TRUE the player will be subject to all normal tempfly flight restrictions and time usage while in creative flight.
     creative: false
-    # If false the timer will not count down while a player is in spectator.
+    # If FALSE the timer will not count down while a player is in spectator.
     # Due to the nature of spectator mode when the player runs out of flight time their flight cannot be disabled until
     # they return to another gamemode.
     spectator: false

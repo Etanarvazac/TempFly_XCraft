@@ -1,7 +1,7 @@
 package com.moneybags.tempfly.time;
 
-import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
@@ -9,6 +9,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.event.FlightUserInitializedEvent;
 import com.moneybags.tempfly.user.FlightUser;
@@ -17,11 +18,10 @@ import com.moneybags.tempfly.util.DailyDate;
 import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
 import com.moneybags.tempfly.util.data.DataBridge;
+import com.moneybags.tempfly.util.data.DataBridge.DataValue;
 import com.moneybags.tempfly.util.data.DataPointer;
 
 import net.milkbowl.vault.permission.Permission;
-
-import com.moneybags.tempfly.util.data.DataBridge.DataValue;
 
 public class TimeManager implements Listener {
 
@@ -44,8 +44,10 @@ public class TimeManager implements Listener {
 	 */
 	private boolean alreadyThrown;
 	public double getTime(UUID u) {
+		Console.debug("-- TimeManager.getTime() called for UUID: " + u);
 		FlightUser user = tempfly.getFlightManager().getUser(u);
-		if (user == null && tempfly.getDataBridge().hasSqlEnabled() && Bukkit.getServer().isPrimaryThread() && !alreadyThrown) {
+		Console.debug("--|> FlightUser is null: " + (user == null));
+		if (user == null && tempfly.getDataBridge().hasDatabaseEnabled() && Bukkit.getServer().isPrimaryThread() && !alreadyThrown) {
 			alreadyThrown = true;
 			try {throw new IllegalStateException("Invocation of getTime() for an offline player should be performed from an asychronous thread! It is not safe to access a database on the main server thread!");} catch (IllegalStateException e) {
 				e.printStackTrace();
@@ -53,7 +55,9 @@ public class TimeManager implements Listener {
 		}
 		DataBridge bridge = tempfly.getDataBridge();
 		// If user is not online the data needs pulled from the database. Otherwise get it from memory.
-		return user == null ? (double) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_TIME, u.toString()), 0d) : user.getTime();
+		double result = user == null ? (double) bridge.getOrDefault(DataPointer.of(DataValue.PLAYER_TIME, u.toString()), 0d) : user.getTime();
+		Console.debug("--|> Returning time: " + result + " (from " + (user == null ? "DataBridge" : "FlightUser") + ")");
+		return result;
 	}
 	
 	/**
@@ -135,8 +139,8 @@ public class TimeManager implements Listener {
 		if (user != null) {
 			user.setTime(seconds);
 		} else {
-			if (tempfly.getDataBridge().hasSqlEnabled()) {
-				Console.warn("It is currently unsafe to alter player time for offline players while using MYSQL storage! The tempfly plugin currently does not sync player time between servers on a network. If this player is currently on a different server their time will not update and will be overwritten when they log off or switch servers.");
+			if (tempfly.getDataBridge().hasDatabaseEnabled()) {
+				Console.warn("It is currently unsafe to alter player time for offline players while using a database storage! The tempfly plugin currently does not sync player time between servers on a network. If this player is currently on a different server their time will not update and will be overwritten when they log off or switch servers.");
 			}
 			DataPointer pointer = DataPointer.of(DataValue.PLAYER_TIME, u.toString());
 			tempfly.getDataBridge().stageChange(pointer, seconds);

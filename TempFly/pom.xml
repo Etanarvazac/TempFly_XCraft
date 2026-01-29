@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>EtanXC</groupId>
     <artifactId>TempFly</artifactId>
-    <version>3.1.11</version>
+    <version>3.2.0</version>
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
@@ -26,11 +26,25 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+							<shadedClassifierName>shaded</shadedClassifierName>
 							<relocations>
 								<relocation>
 									<pattern>org.sqlite</pattern>
 									<shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
 								</relocation>
+                                <relocation>
+                                    <pattern>com.mongodb</pattern>
+                                    <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.mongodb</pattern>
+                                    <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.bson</pattern>
+                                    <shadedPattern>com.moneybags.tempfly.libs.bson</shadedPattern>
+                                </relocation>
 							</relocations>
 						</configuration>
 					</execution>
@@ -77,7 +91,9 @@
     </repositories>
 
     <dependencies>
-	<dependency>
+
+        <!-- Databases -->
+	    <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.32</version>
@@ -89,6 +105,19 @@
 			<version>3.45.1.0</version>
 		</dependency>
 
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.45.1.0</version>
+		</dependency>
+
+        <!-- Bukkit / Spigot / Plugins -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -118,7 +147,6 @@
         </dependency>
 
         <!-- Placeholders -->
-
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>

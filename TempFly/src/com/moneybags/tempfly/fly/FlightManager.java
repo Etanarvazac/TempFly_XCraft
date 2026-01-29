@@ -44,6 +44,7 @@ import com.moneybags.tempfly.hook.region.CompatRegion;
 import com.moneybags.tempfly.user.FlightUser;
 import com.moneybags.tempfly.user.UserLoader;
 import com.moneybags.tempfly.util.Console;
+import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
 import com.moneybags.tempfly.util.data.Reloadable;
 
@@ -517,13 +518,13 @@ public class FlightManager implements Listener, Reloadable {
 			// Check if they are in a fly-enabled mode
 			if (gm == GameMode.CREATIVE && V.creativeTimer) {
 				// Since they were in creative, let's not remove flight.
-				Console.debug("GameMode: " + gm);
+				Console.debug("--|>GameMode: " + gm);
 				if (wasFlying) {
 					user.applyFlightCorrect(true);
 					user.applySpeedCorrect(true, 10);
 				} else {
 					user.disableFlight(-1, false);
-					Console.debug("TF--| Flight was not enabled before world change for CREATIVE.");
+					Console.debug("--|> Flight was not enabled before world change for CREATIVE.");
 				}
 			} else if (gm == GameMode.SPECTATOR) {
 				// Since they were in spectator, let's not give them a 1-way
@@ -541,19 +542,19 @@ public class FlightManager implements Listener, Reloadable {
 					boolean canFly = user.enableFlight();
 					if (!canFly) {
 						user.disableFlight(-1, false);
-						Console.debug("TF--| Flight disabled due to world requirements for SURVIVAL.");
+						Console.debug("--|> Flight disabled due to world requirements for SURVIVAL.");
 					} else {
 						user.applyFlightCorrect(true);
 						user.applySpeedCorrect(true, 10);
-						Console.debug("TF--| Flight maintained due to world requirements for SURVIVAL and flight was permitted.");
+						Console.debug("--|> Flight maintained due to world requirements for SURVIVAL and flight was permitted.");
 					}
 				} else {
 					user.disableFlight(-1, false);
-					Console.debug("TF--| Flight was not enabled before world change for SURVIVAL.");
+					Console.debug("--|> Flight was not enabled before world change for SURVIVAL.");
 				}
 			}
 		}
-		Console.debug("TF--| World change flight processing complete.");
+		Console.debug("--|> World change flight processing complete.");
 	}
 
 	/**
@@ -695,6 +696,46 @@ public class FlightManager implements Listener, Reloadable {
 	
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = false)
 	public void onFly(PlayerToggleFlightEvent e) {
-		Console.debug("----------- Normal ------------", e.getPlayer().getName() + " toggled flight!", "Cancelled: " + e.isCancelled(), "Flying: " + e.isFlying());
+		Console.debug("----------- Normal ------------",
+			e.getPlayer().getName() + " toggled flight!",
+			"Cancelled: " + e.isCancelled(),
+			"Flying: " + e.isFlying());
+		
+		// Check if player started flying (without stopping)
+		if (!e.isFlying()) {
+			return;
+		}
+
+		// Get FlightUser
+		Player p = e.getPlayer();
+		FlightUser user = getUser(p);
+		if (user == null) {
+			return;
+		}
+
+		// Check if player has Infinite Flight permission and if it's the first time they had permission
+		// If so, let's automatically enable it and inform them of toggle command.
+		// If not, let's ensure first use flag is true.
+		if (user.isInfiniteFirstUse() 
+				&& p.hasPermission("tempfly.infinite")
+				&& !user.hasInfiniteFlight()) {
+			Console.debug("--|> Infinite Flight first use detected for " + p.getName() + ". Enabling infinite flight.");
+			
+			// Inform player FIRST before making any state changes
+			Console.debug("--|> Informing player of infinite flight enable.");
+			Console.debug("--|> flyInfiniteFirstUse message: " + V.flyInfiniteFirstUse);
+			U.m(p, V.flyInfiniteFirstUse);
+			
+			// Enable infinite flight
+			user.setInfiniteFlight(true);
+
+			// Update first use flag to skip this check next time
+			user.setInfiniteFirstUse(false);
+		} else if (!p.hasPermission("tempfly.infinite") && !user.isInfiniteFirstUse()){
+			// Ensure first use flag is true for future checks
+			Console.debug("--|> Player lost infinite flight permission, disabling infinite flight and first use flag.");
+			user.setInfiniteFlight(false);
+			user.setInfiniteFirstUse(true);
+		}
 	}
 }

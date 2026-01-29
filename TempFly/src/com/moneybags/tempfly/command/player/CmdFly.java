@@ -83,6 +83,7 @@ public class CmdFly extends TempFlyCommand {
 				if (s == p) {U.m(s, V.flyAlreadyEnabled);}
 				return;
 			}
+			
 			// Time check 
 			double time = tempfly.getTimeManager().getTime(p.getUniqueId());
 			if ((time <= 0) && (!user.hasInfiniteFlight())) {

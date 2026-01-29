@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS tempfly_data
     last_daily_bonus        BIGINT           DEFAULT 0,
     trail                   VARCHAR(32)      DEFAULT NULL,
     infinite                BOOLEAN          DEFAULT 0,
+    infinite_first_use      BOOLEAN          DEFAULT 1,
     bypass                  BOOLEAN          DEFAULT 0,
     speed                   DOUBLE(5, 2)     DEFAULT -999.00,
     display_visible         BOOLEAN          DEFAULT 1,

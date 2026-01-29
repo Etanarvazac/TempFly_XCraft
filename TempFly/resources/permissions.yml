@@ -14,11 +14,11 @@
 #    Particles (1.9 and later): https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
 #
 # Line | Category
-# =====|===========================
+# =====|========================
 #   11 | Player Permissions
 #   55 | Staff Permissions
-#   -- | Admin or OP Permisiions
-#   -- | Other Permissions
+#  142 | Admin or OP Permisiions
+#  196 | Other Permissions
 
 
 # == PLAYER PERMISSIONS ==
@@ -37,20 +37,14 @@ tempfly.speed.self:
   desc: Allows user to set their fly speed.
   command: /tf speed [speed]
 
-# --- DISCLAIMER --- This is a beta feature which may not work yet.
 tempfly.time.display:
   desc: Allows user to use the display command
   default: not-op
   command: /tf display
 
-# --- DISCLAIMER --- This is a beta feature which may not work yet.
 tempfly.time.display.self:
   desc: Allow user to show/hide their own timer above the action bar.
   default: not-op
-
-tempfly.time.display.other:
-  desc: Allows staff to show/hide another players actionbar timer.
-  default: op
 
 tempfly.time.self:
   desc: Allow user to view thier remaining time.
@@ -93,6 +87,7 @@ tempfly.infinite:
     - However, they will still have their actual time balance stored in the background. They dont lose it.
     - IT DOES NOT let them pay infinite time to other players.
     - In addition it does not affect their max_time, they are completely seperate things.
+  default: op
 
 tempfly.infinite.toggle:
   desc: Allow the user to toggle their infinite flight.
@@ -113,9 +108,14 @@ tempfly.time.*:
     tempfly.time.self: true
     tempfly.time.other: true
 
-# --- DISCLAIMER --- This is a beta feature which may not work yet.
 tempfly.time.display.other:
   desc: Allows user to show/hide another players actionbar timer.
+
+tempfly.time.display.*:
+  desc: Allows user to show/hide their own and others actionbar timer.
+  children:
+    tempfly.time.display.self: true
+    tempfly.time.display.other: true
   
 tempfly.time.other:
   desc: Allow user to view another players remaining time.
@@ -223,3 +223,8 @@ tempfly.speed.world.[world_name].[speed]:
 tempfly.trail.[particle]: 
   desc: Gives user access to use individual trails.
 
+tempfly.workaround.infinite.bypass.fix_a:
+  desc: If true, player will be able to bypass the infinite flight workaround A restriction.
+
+tempfly.workaround.infinite.bypass.fix_b:
+  desc: If true, player will be able to bypass the infinite flight workaround B restriction.

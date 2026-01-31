@@ -119,6 +119,19 @@
 
         <!-- Bukkit / Spigot / Plugins -->
         <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.45.1.0</version>
+		</dependency>
+
+        <!-- Bukkit / Spigot / Plugins -->
+        <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.21.8-R0.1-SNAPSHOT</version>

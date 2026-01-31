@@ -1,11 +1,11 @@
 package com.moneybags.tempfly;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -82,7 +82,7 @@ public class TempFly extends JavaPlugin {
 		
 		try {
 			this.bridge   = new DataBridge(this);
-		} catch (IOException | SQLException e1) {
+		} catch (SQLException e1) {
 			e1.printStackTrace();
 			getServer().getPluginManager().disablePlugin(this);
 			return;
@@ -152,10 +152,16 @@ public class TempFly extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
-		flight.onDisable();
-		gui.endAllSessions();
-		bridge.commitAll();
-		bridge.shutdown();
+		if (flight != null) {
+			flight.onDisable();
+		}
+		if (gui != null) {
+			gui.endAllSessions();
+		}
+		if (bridge != null) {
+			bridge.commitAll();
+			bridge.shutdown();
+		}
 	}
 	
 	/*

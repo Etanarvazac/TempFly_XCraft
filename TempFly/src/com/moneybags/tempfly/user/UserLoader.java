@@ -48,7 +48,11 @@ public class UserLoader implements Runnable {
 		final TimeManager timeManager = manager.getTempFly().getTimeManager();
 		
 		if (bridge.hasSqlEnabled() || bridge.hasSqliteEnabled()) {
-			PreparedStatement st = bridge.prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)");
+			// Use appropriate INSERT syntax based on database type
+			String insertQuery = bridge.hasSqliteEnabled() 
+				? "INSERT OR IGNORE INTO tempfly_data(uuid) VALUES(?)"
+				: "INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)";
+			PreparedStatement st = bridge.prepareStatement(insertQuery);
 			try {
 				st.setString(1, u.toString());
 				st.execute();

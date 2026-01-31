@@ -111,7 +111,7 @@ public class CmdMigrate extends TempFlyCommand {
 				// Use appropriate INSERT syntax based on database type
 				String insertQuery = tempfly.getDataBridge().hasSqliteEnabled()
 					? "INSERT OR IGNORE INTO tempfly_data(uuid) VALUES(?)"
-					: "INSERT OR IGNORE INTO tempfly_data(uuid) VALUES(?)";
+					: "INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)";
 				try (PreparedStatement stCreate = tempfly.getDataBridge().prepareStatement(insertQuery)) {
 					stCreate.setString(1, uuid);
 					stCreate.execute();
@@ -171,3 +171,4 @@ public class CmdMigrate extends TempFlyCommand {
 		s.sendMessage("§a-------------------------------------");
 	}
 }
+

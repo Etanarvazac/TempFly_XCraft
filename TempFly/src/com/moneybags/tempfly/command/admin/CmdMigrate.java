@@ -108,9 +108,11 @@ public class CmdMigrate extends TempFlyCommand {
 
 			// 1) Create row (only for SQL databases, MongoDB auto-creates documents)
 			if (tempfly.getDataBridge().hasSqlEnabled() || tempfly.getDataBridge().hasSqliteEnabled()) {
-				try (PreparedStatement stCreate =
-							 tempfly.getDataBridge()
-									 .prepareStatement("INSERT IGNORE INTO tempfly_data(uuid) VALUES(?)")) {
+				// Use appropriate INSERT syntax based on database type
+				String insertQuery = tempfly.getDataBridge().hasSqliteEnabled()
+					? "INSERT OR IGNORE INTO tempfly_data(uuid) VALUES(?)"
+					: "INSERT OR IGNORE INTO tempfly_data(uuid) VALUES(?)";
+				try (PreparedStatement stCreate = tempfly.getDataBridge().prepareStatement(insertQuery)) {
 					stCreate.setString(1, uuid);
 					stCreate.execute();
 				} catch (SQLException e) {

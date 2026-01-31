@@ -65,7 +65,8 @@ system:
   #                    used if no other database is enabled.
   #     SHADING NOTE - While MySQL or FlatFile databases will work in both LITE or SHADED versions of TempFly,
   #                    you will need to either use the SHADED version of TempFly or manually add the respective
-  #                    database drivers to your server for MongoDB or SQLite databases to work.
+  #                    database drivers to your server for MongoDB or SQLite databases to work. Please note that
+  #                    Spigot (and it's forks like Paper and Purpur) has these built-in, allowing SQLite without shading.
   #        BETA NOTE - While MongoDB and SQLite databases are available, they are still in BETA. Please report
   #                    any issues you may find while using these databases.
   mysql:

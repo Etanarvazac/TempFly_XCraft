@@ -5,9 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -32,9 +28,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.util.Console;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 
@@ -43,9 +36,9 @@ public class DataBridge implements DataFileHolder {
 
 	private TempFly tempfly;
 	private MysqlDataSource dataSource;
-	private MongoClient mongoClient;
-	private MongoDatabase mongoDatabase;
-	private Connection sqliteConnection;
+	// MongoDB and SQLite handlers loaded via reflection to avoid class loading issues
+	private Object mongoHandler;
+	private Object sqliteHandler;
 	private Connection migrationConnection = null;
 	
 	private File dataf;
@@ -68,7 +61,7 @@ public class DataBridge implements DataFileHolder {
 	}
 	
 	public boolean hasDatabaseEnabled() {
-		return dataSource != null || mongoClient != null || sqliteConnection != null;
+		return dataSource != null || mongoHandler != null || sqliteHandler != null;
 	}
 
 	// Helpers for checking specific database types
@@ -77,11 +70,11 @@ public class DataBridge implements DataFileHolder {
 	}
 
 	public boolean hasMongoEnabled() {
-		return mongoClient != null;
+		return mongoHandler != null;
 	}
 
 	public boolean hasSqliteEnabled() {
-		return sqliteConnection != null;
+		return sqliteHandler != null;
 	}
 	
 	public boolean connectSql() throws SQLException {
@@ -113,39 +106,34 @@ public class DataBridge implements DataFileHolder {
 
 	public boolean connectMongo() {
 		try {
-			// Grab config values...
-			String host = Files.config.getString("system.mongodb.host");
-			int port = Files.config.getInt("system.mongodb.port");
-			String name = Files.config.getString("system.mongodb.name");
-			String user = Files.config.getString("system.mongodb.user");
-			String pass = Files.config.getString("system.mongodb.pass");
-			String authDb = Files.config.getString("system.mongodb.auth_database", "admin");
-
-			// ...and encode user and pass, with special character handling...
-			String encodedUser = URLEncoder.encode(user, StandardCharsets.UTF_8.toString());
-			String encodedPass = URLEncoder.encode(pass, StandardCharsets.UTF_8.toString());
-
-			// ...and now build the connection string.
-			String connectionString;
-			if (user != null && !user.isEmpty() && pass != null && !pass.isEmpty()) {
-				// Authenticated connection string
-				connectionString = String.format("mongodb://%s:%s@%s:%d/%s?authSource=%s",
-					encodedUser, encodedPass, host, port, name, authDb);
-			} else {
-				// Non-authenticated connection string
-				connectionString = String.format("mongodb://%s:%d/%s", host, port, name);
+			// Load MongoDBHandler via reflection to avoid class loading issues
+			Class<?> handlerClass = Class.forName("com.moneybags.tempfly.util.data.MongoDBHandler");
+			this.mongoHandler = handlerClass.getDeclaredConstructor().newInstance();
+			
+			// Get configuration section
+			ConfigurationSection section = Files.config.getConfigurationSection("system.mongodb");
+			
+			// Call connect method via reflection
+			java.lang.reflect.Method connectMethod = handlerClass.getMethod("connect", ConfigurationSection.class);
+			boolean success = (boolean) connectMethod.invoke(mongoHandler, section);
+			
+			if (!success) {
+				this.mongoHandler = null;
+				return false;
 			}
-
-
-			mongoDatabase.listCollectionNames().first();
-			Console.info("Successfully connected to MongoDB database!");
+			
 			return true;
-		} catch (UnsupportedEncodingException e) {
-			Console.severe("Failed to encode MongoDB credentials! Reason: Unsupported encoding.");
-			e.printStackTrace();
+			
+		} catch (ClassNotFoundException e) {
+			Console.severe("MongoDB driver not found! This feature requires the SHADED version of TempFly.");
+			Console.severe("Download from: https://github.com/Etanarvazac/TempFly_XCraft/releases (use TempFly-X.X.X-shaded.jar)");
+			return false;
+		} catch (NoClassDefFoundError e) {
+			Console.severe("MongoDB driver classes missing! This feature requires the SHADED version of TempFly.");
+			Console.severe("Download from: https://github.com/Etanarvazac/TempFly_XCraft/releases (use TempFly-X.X.X-shaded.jar)");
 			return false;
 		} catch (Exception e) {
-			Console.severe("Could not establish a connection to MongoDB database!");
+			Console.severe("Failed to load MongoDB handler!");
 			e.printStackTrace();
 			return false;
 		}
@@ -153,41 +141,48 @@ public class DataBridge implements DataFileHolder {
 
 	public boolean connectSqlite() {
 		try {
-			// Get path from config, defaulting to 'data.db' if not set.
-			String filePath = Files.config.getString("system.sqlite.file_path", "data.db");
-
-			// Let's create the file in the chosen location...
-			File dbFile = new File(tempfly.getDataFolder(), filePath);
-
-			// ..and double check for the parent directory.
-			dbFile.getParentFile().mkdirs();
-
-			// Now let's build JDBC for SQlite...
-			String jdbcUrl = "jdbc:sqlite:" + dbFile.getAbsolutePath();
-
-			// ...create the connection...
-			this.sqliteConnection = java.sql.DriverManager.getConnection(jdbcUrl);
-
-			// ...and verify connection to the database.
-			if (!sqliteConnection.isValid(1)) {
-				Console.severe("Could not establish a connection to SQLite database!");
+			// Load SQLiteHandler via reflection to avoid class loading issues
+			Class<?> handlerClass = Class.forName("com.moneybags.tempfly.util.data.SQLiteHandler");
+			this.sqliteHandler = handlerClass.getConstructor(TempFly.class).newInstance(tempfly);
+			
+			// Get configuration section
+			ConfigurationSection section = Files.config.getConfigurationSection("system.sqlite");
+			
+			// Call connect method via reflection
+			java.lang.reflect.Method connectMethod = handlerClass.getMethod("connect", ConfigurationSection.class);
+			boolean success = (boolean) connectMethod.invoke(sqliteHandler, section);
+			
+			if (!success) {
+				this.sqliteHandler = null;
 				return false;
-			} else {
-				Console.info("Successfully connected to SQLite database!");
 			}
+			
 			return true;
-		} catch (SQLException e) {
-			Console.severe("Could not establish a connection to SQLite database!");
+			
+		} catch (ClassNotFoundException e) {
+			Console.severe("SQLite driver not found! This feature requires the SHADED version of TempFly or Spigot, Paper, or Purpur server types, which includes the drivers..");
+			Console.severe("Download from: https://github.com/Etanarvazac/TempFly_XCraft/releases (use TempFly-X.X.X-shaded.jar)");
+			return false;
+		} catch (NoClassDefFoundError e) {
+			Console.severe("SQLite driver classes missing! This feature requires the SHADED version of TempFly or Spigot, Paper, or Purpur server types, which includes the drivers.");
+			Console.severe("Download from: https://github.com/Etanarvazac/TempFly_XCraft/releases (use TempFly-X.X.X-shaded.jar)");
+			return false;
+		} catch (Exception e) {
+			Console.severe("Failed to load SQLite handler!");
 			e.printStackTrace();
 			return false;
 		}
 	}
 	
-	private void initMySqlDb() throws IOException, SQLException {
+	private void initMySqlDb() throws SQLException {
 	    String setup;
 	    try (InputStream in = tempfly.getResource("dbsetup.sql")) {
 	        setup = new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
-	    } 
+	    } catch (IOException e) {
+			Console.severe("Failed to load database setup script!");
+			e.printStackTrace();
+			return;
+		}
 	    String[] queries = setup.split(";");
 	    for (String query : queries) {
 	        if (query.isBlank()) continue;
@@ -196,54 +191,36 @@ public class DataBridge implements DataFileHolder {
 	            stmt.execute();
 	        } 
 	    }
-	    Console.info("§2MySQL setup complete.");
+	    Console.info("MySQL setup complete.");
 	}
 
 	private void initMongoDB () {
 		try {
-			// MongoDB automatically creates collections, but we want to ensure it exists and index it
-			String collectionName = "tempfly_data";
-			
-			// Now let's verify it. IF it fails, then we'll create one
-			boolean collectionExists = false;
-			for (String name : mongoDatabase.listCollectionNames()) {
-				if (name.equals(collectionName)) {
-					collectionExists = true;
-					break;
-				}
+			if (mongoHandler != null) {
+				// Call initialize method via reflection
+				java.lang.reflect.Method initMethod = mongoHandler.getClass().getMethod("initialize");
+				initMethod.invoke(mongoHandler);
 			}
-
-			if (!collectionExists) {
-				mongoDatabase.createCollection(collectionName);
-			}
-
-			// Create index of UUID's field for faster lookups
-			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-			collection.createIndex(new Document("uuid", 1));
-
-			Console.info("MongoDB setup complete.");
 		} catch (Exception e) {
 			Console.severe("MongoDB setup failed.");
 			e.printStackTrace();
 		}
 	}
 
-	private void initSqlite() throws IOException, SQLException {
-		String setup;
-		try (InputStream in = tempfly.getResource("dbsetup.sql")) {
-			setup = new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
-		}
-		String[] queries = setup.split(";");
-		for (String query : queries) {
-			if (query.isBlank()) continue;
-			try (PreparedStatement stmt = sqliteConnection.prepareStatement(query)) {
-				stmt.execute();
+	private void initSqlite() {
+		try {
+			if (sqliteHandler != null) {
+				// Call initialize method via reflection
+				java.lang.reflect.Method initMethod = sqliteHandler.getClass().getMethod("initialize");
+				initMethod.invoke(sqliteHandler);
 			}
+		} catch (Exception e) {
+			Console.severe("SQLite setup failed.");
+			e.printStackTrace();
 		}
-		Console.info("SQLite setup complete.");
 	}
 	
-	public DataBridge(TempFly tempfly) throws IOException, SQLException {
+	public DataBridge(TempFly tempfly) throws SQLException {
 		this.tempfly = tempfly;
 		// Try each database based on priority order: MySQL > MongoDB > SQLite
 		if (Files.config.getBoolean("system.mysql.enabled")) {
@@ -475,15 +452,24 @@ public class DataBridge implements DataFileHolder {
 				}
 			}
 		} else if (hasMongoEnabled()) {
-			// MongoDB reading operation
-			String collectionName = value.getTable().getSqlTable();
-			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-
-			Document filterDoc = new Document(value.getTable().getPrimaryKey(), path[0]);
-			Document mresult = collection.find(filterDoc).first();
-
-			if (mresult != null) {
-				return mresult.get(value.getSqlColumn());
+			// MongoDB reading operation via handler
+			try {
+				String collectionName = value.getTable().getSqlTable();
+				String primaryKey = value.getTable().getPrimaryKey();
+				String column = value.getSqlColumn();
+				
+				// Call findDocument via reflection
+				java.lang.reflect.Method findMethod = mongoHandler.getClass().getMethod("findDocument", 
+					String.class, String.class, String.class);
+				Object document = findMethod.invoke(mongoHandler, collectionName, primaryKey, path[0]);
+				
+				if (document != null) {
+					// Call get method on Document via reflection
+					java.lang.reflect.Method getMethod = document.getClass().getMethod("get", Object.class);
+					return getMethod.invoke(document, column);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		} else {
 			// YAML reading operation
@@ -505,7 +491,7 @@ public class DataBridge implements DataFileHolder {
 	}
 	
 	public PreparedStatement prepareStatement(String statement) {
-		if (!hasSqlEnabled()) {
+		if (!hasSqlEnabled() && !hasSqliteEnabled()) {
 			return null;
 		}
 		try {
@@ -516,9 +502,18 @@ public class DataBridge implements DataFileHolder {
 			if (hasSqlEnabled()) {
 				return dataSource.getConnection().prepareStatement(statement);
 			} else if (hasSqliteEnabled()) {
-				return sqliteConnection.prepareStatement(statement);
+				// Get connection from SQLite handler via reflection
+				java.lang.reflect.Method getConnectionMethod = sqliteHandler.getClass().getMethod("getConnection");
+				Connection conn = (Connection) getConnectionMethod.invoke(sqliteHandler);
+				// Check if connection is valid before using it
+				if (conn == null || conn.isClosed()) {
+					return null;
+				}
+				return conn.prepareStatement(statement);
 			}
 		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -576,20 +571,32 @@ public class DataBridge implements DataFileHolder {
 				e.printStackTrace();
 			}
 		} else if (hasMongoEnabled() && (fileHolder == null || !fileHolder.forceYaml())) {
-			// MongoDB reading operation
-			String collectionName = table.getSqlTable();
-			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-
-			Document filterDoc = new Document(table.getPrimaryKey(), row);
-			Document result = collection.find(filterDoc).first();
-
-			if (result != null) {
-				// Iterate through keys and exclude the "_id" field
-				for (String key : result.keySet()) {
-					if (!key.equals("_id")) {
-						values.put(key, result.get(key));
+			// MongoDB reading operation via handler
+			try {
+				String collectionName = table.getSqlTable();
+				String primaryKey = table.getPrimaryKey();
+				
+				// Call findDocument via reflection
+				java.lang.reflect.Method findMethod = mongoHandler.getClass().getMethod("findDocument", 
+					String.class, String.class, String.class);
+				Object document = findMethod.invoke(mongoHandler, collectionName, primaryKey, row);
+				
+				if (document != null) {
+					// Call keySet method on Document via reflection
+					java.lang.reflect.Method keySetMethod = document.getClass().getMethod("keySet");
+					@SuppressWarnings("unchecked")
+					java.util.Set<String> keySet = (java.util.Set<String>) keySetMethod.invoke(document);
+					
+					// Call get method for each key
+					java.lang.reflect.Method getMethod = document.getClass().getMethod("get", Object.class);
+					for (String key : keySet) {
+						if (!key.equals("_id") && !key.equals(primaryKey)) {
+							values.put(key, getMethod.invoke(document, key));
+						}
 					}
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		} else {
 			// YAML reading operation
@@ -629,6 +636,22 @@ public class DataBridge implements DataFileHolder {
 			PreparedStatement st = prepareStatement(
 			"UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
 				+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
+			
+			// Safety check: if connection is closed, try to reconnect and save
+			if (st == null && hasSqliteEnabled()) {
+				try {
+					// Reconnect via handler
+					java.lang.reflect.Method getConnectionMethod = sqliteHandler.getClass().getMethod("getConnection");
+					Connection conn = (Connection) getConnectionMethod.invoke(sqliteHandler);
+					if (conn != null && !conn.isClosed()) {
+						st = conn.prepareStatement("UPDATE " + value.getTable().getSqlTable() + " SET " + value.getSqlColumn()
+							+ " = ? WHERE " + value.getTable().getPrimaryKey() + " = ?");
+					}
+				} catch (Exception e) {
+					Console.warn("Failed to reconnect for saving data: " + e.getMessage());
+				}
+			}
+			
 		Class<?> type = value.getType();
 			if (type.equals(Boolean.TYPE)) {
 				st.setBoolean(1, (boolean) change.getData());
@@ -644,26 +667,31 @@ public class DataBridge implements DataFileHolder {
 			st.close();
 
 		} else if (hasMongoEnabled() && !forceYaml) {
-			// MongoDB writing operation
-			// Set up the collection
-			String collectionName = value.getTable().getSqlTable();
-			MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-
-			// Now build the update document
-			Document updateDoc = new Document("$set", new Document(value.getSqlColumn(), change.getData()));
-			Document filterDoc = new Document(value.getTable().getPrimaryKey(), path[0]);
-
-			// Send the update if it exists, otherwise insert a new document
-			collection.updateOne(filterDoc, updateDoc, new com.mongodb.client.model.UpdateOptions().upsert(true));
+			// MongoDB writing operation via handler
+			try {
+				String collectionName = value.getTable().getSqlTable();
+				String primaryKey = value.getTable().getPrimaryKey();
+				String field = value.getSqlColumn();
+				
+				// Call upsertField via reflection
+				java.lang.reflect.Method upsertMethod = mongoHandler.getClass().getMethod("upsertField", 
+					String.class, String.class, String.class, String.class, Object.class);
+				upsertMethod.invoke(mongoHandler, collectionName, primaryKey, path[0], field, change.getData());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 		} else  {
 			// YAML writing operation
 			int index = 0;
 			StringBuilder sb = new StringBuilder();
 			for (String s: value.getYamlPath()) {
-				sb.append(sb.length() > 0 ? "." : "" + s);
+				if (sb.length() > 0) {
+					sb.append(".");
+				}
+				sb.append(s);
 				if (path.length > index) {
-					sb.append("." + path[index]);
+					sb.append(".").append(path[index]);
 				}
 				index++;
 			}
@@ -867,7 +895,13 @@ public class DataBridge implements DataFileHolder {
 				if (hasSqlEnabled()) {
 					migrationConnection = dataSource.getConnection();
 				} else if (hasSqliteEnabled()) {
-					migrationConnection = sqliteConnection;
+					// Get connection from SQLite handler via reflection
+					try {
+						java.lang.reflect.Method getConnectionMethod = sqliteHandler.getClass().getMethod("getConnection");
+						migrationConnection = (Connection) getConnectionMethod.invoke(sqliteHandler);
+					} catch (Exception e) {
+						throw new SQLException("Failed to get SQLite connection for migration", e);
+					}
 				}
 			}
 		}
@@ -903,22 +937,22 @@ public class DataBridge implements DataFileHolder {
 
 		// MySQL cleanup is handled by MySQL itself via connection pooling, which means we don't need to do anything for it.
 
-		// MongoDB cleanup
-		if (mongoClient != null) {
+		// MongoDB cleanup via handler
+		if (mongoHandler != null) {
 			try {
-				mongoClient.close();
-				Console.info("MongoDB connection closed.");
+				java.lang.reflect.Method closeMethod = mongoHandler.getClass().getMethod("close");
+				closeMethod.invoke(mongoHandler);
 			} catch (Exception e) {
 				Console.warn("Could not close MongoDB connection cleanly! Reason: " + e.getMessage());
 			}
 		}
 
-		// SQLite cleanup
-		if (sqliteConnection != null) {
+		// SQLite cleanup via handler
+		if (sqliteHandler != null) {
 			try {
-				sqliteConnection.close();
-				Console.info("SQLite connection closed.");
-			} catch (SQLException e) {
+				java.lang.reflect.Method closeMethod = sqliteHandler.getClass().getMethod("close");
+				closeMethod.invoke(sqliteHandler);
+			} catch (Exception e) {
 				Console.warn("Could not close SQLite connection cleanly! Reason: " + e.getMessage());
 			}
 		}

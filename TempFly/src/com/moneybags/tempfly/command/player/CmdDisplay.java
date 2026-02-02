@@ -78,6 +78,11 @@ public class CmdDisplay extends TempFlyCommand {
           U.m(s, V.sqlErrorPointer);
           return;
         }
+        // Before running check, let's include a failsafe in the event this is null. This check will
+        // use TempFly's default setting for Display State (true) as the fallback.
+        if (current == null) {
+          current = true
+        }
         newState = !current;
         Console.debug("TF--| CmdDisplay: Toggling self display state to " + newState);
         break;

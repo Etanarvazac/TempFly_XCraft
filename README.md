@@ -32,3 +32,8 @@ These can be sent here on GitHub (using the Issues tab at top of page) or on [my
 ## Developers:
 TempFly can be hooked into using the TempFlyAPI. this can be aquired using TempFly.getAPI().
 There is lots of documentation in the source code that explains what to do but if you still have problems ChiefMoneyBags made a small tutorial which you can find here: https://www.youtube.com/watch?v=wERiwqX-Wmw
+
+## Analytics by bStats
+[Click here to view all bStats analytics](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194)
+
+![Servers](https://bstats.org/signatures/bukkit/TempFly_XCraft.svg)

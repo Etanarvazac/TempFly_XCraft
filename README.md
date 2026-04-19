@@ -1,6 +1,8 @@
 # Tempfly
 Tempfly is a highly configurable Spigot/Bukkit plugin for Minecraft that introduces many flight related features to the game.
 
+Major rework is planned. [You can read about it here](https://github.com/Etanarvazac/TempFly_XCraft/blob/Master/Future_Rework.md)
+
 ## Features
 - Fly Time currency - Players can pay other players fly time.
 - PvP & PvE toggles - You can set Flight to disable when a player is in combat, whether it be with another player or with hostile mobs.

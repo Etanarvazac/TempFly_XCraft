@@ -20,37 +20,31 @@ Rework Stages (current stage checked):
 
 ## FAQ
 **Whem will the rework begin?**
-
 > Sometime between May 01, and May 15.
 
 **What is the current target versions?**
-
 > As of April 18, Minecraft 1.20.x and Java 21. This is currently based on only data from [bStats](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194)
 
 **Will TempFly_XCraft continue to recieve updates until XFly is complete?**
-
 > Only bug fix updates. Feature changes, additions, etc. will still be accepted, but put on hold until rework is complete. Please keep reporting bugs as you find them.
 
 **Will TempFly_Xcraft recieve an update for Minecraft 26.x?**
-
 > Not unless something major breaks. According to [bStats](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194), there has been at least 1 server using v3.2.0 on Minecraft 26.1.2 without any issues reported. v3.2.0, while untested officially, should work fine.
 
 **How can I let you know if I'm using TempFly_XCraft on an earlier version of Minecraft and/or Java?**
-
 > If using v3.2.0, this should automatically be reported to [bStats](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194) unless you've disabled it. If you have, or are using an earlier version of TempFly_XCraft (v3.1.8-v.1.11), please jump into [my Discord server](https://discord.gg/jP2uyYzbCA) to let me know. (Make sure you select "Plugins" from Onboarding questions or "Channels & Roles" to see TempFly channels).
 
 **What about previously planned feature additions?**
-
 > Database to database migration is delayed until XFly is reworked.
 
 **Can I help patch issues with TempFly_XCraft?**
-
 > Sure! I will still be watching for PR's and if it fixes an issue, I'll release the patch!
 
 **Can I help with the rework?**
-
 > While it is appreciated, the rework will first be done locally. Keep an eye out for when the first build is available for testing as it is then when contributions will be accepted to this update.
 
-**I have a question that's not listed here.**
+**What will happen to TempFly_XCraft after rework is completed?**
+> This repository will remain public. However, all Releases will be removed. Using the updates in this repository after XFly is completed would require you to manually compile TempFly_XCraft with Maven from your own local development enviroment.
 
+**I have a question that's not listed here.**
 > Head over to [my Discord server](https://discord.gg/jP2uyYzbCA) to ask it. (Make sure you select "Plugins" from Onboarding questions or "Channels & Roles" to see TempFly channels).

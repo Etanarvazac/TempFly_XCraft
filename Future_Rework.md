@@ -20,10 +20,10 @@ Rework Stages (current stage checked):
 
 ## FAQ
 **Whem will the rework begin?**
-> Sometime in May 2026.
+> ~~Sometime in May 2026.~~ Rework has begun.
 
 **What is the current target versions?**
-> As of April 29, Minecraft 1.20.x and Java 21. This is currently based on only data from [bStats](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194)
+> As of May 25th, Minecraft 1.20.x and Java 21. This is currently based on only data from [bStats](https://bstats.org/plugin/bukkit/TempFly_XCraft/29194)
 
 **Will TempFly_XCraft continue to recieve updates until XFly is complete?**
 > Only bug fix updates. Feature changes, additions, etc. will still be accepted, but will likely be put on hold until rework is complete. Please keep reporting bugs as you find them and sharing your ideas.

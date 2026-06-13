@@ -1,19 +1,19 @@
 package com.moneybags.tempfly.aesthetic;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.aesthetic.title.LegacyTitle;
 import com.moneybags.tempfly.aesthetic.title.ModernTitle;
 import com.moneybags.tempfly.aesthetic.title.Title;
+import com.moneybags.tempfly.util.U;
 
 public class TitleAPI {
 
 	private static Title title;
-	
+
     public static void initialize(TempFly tempfly) {
-    	  if (Bukkit.getServer().getVersion().matches(".*1\\.(?!10|11)\\d{2,}.*")) {
+    	  if (U.isModernServer()) {
     	      title = new ModernTitle();
         } else {
     	      title = new LegacyTitle();

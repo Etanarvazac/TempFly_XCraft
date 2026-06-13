@@ -265,9 +265,8 @@ public class Files {
 		Console.debug("Looking for key '" + key + "' (path: " + fullPath + ") at indent level " + targetIndent);
 
 		// Build the expected parent indents
-		String[] pathParts = fullPath.split("\\.");
 		List<String> pathStack = new ArrayList<>();
-		for (iString part : pathParts) {
+		for (String part : pathParts) {
 			pathStack.add(part);
 		}
 		pathStack.remove(pathStack.size() - 1); // Remove key, we're just getting the parents

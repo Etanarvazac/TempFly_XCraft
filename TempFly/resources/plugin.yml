@@ -1,7 +1,7 @@
 name: TempFly
 main: com.moneybags.tempfly.TempFly
 softdepend: [Essentials, PlaceholderAPI, Vault, WorldGuard, WorldEdit]
-api-version: 1.13
+api-version: '26.1'
 version: 3.2.0
 commands:
     tempfly:

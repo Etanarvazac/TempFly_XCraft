@@ -23,6 +23,25 @@ public class U {
 	public static void command(String s) {
 		Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), s);
 	}
+
+	private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)\\.(\\d+)");
+
+	/**
+	 * Determines whether the running server uses the modern (1.12+) Bukkit API.
+	 * Handles both the legacy "1.x.y" scheme and the calendar-based scheme
+	 * introduced in 2026 (e.g. "26.1.2"). Anything older than 1.12 is treated
+	 * as legacy. Defaults to modern when the version cannot be parsed.
+	 */
+	public static boolean isModernServer() {
+		java.util.regex.Matcher m = VERSION_PATTERN.matcher(Bukkit.getBukkitVersion());
+		if (!m.find()) {
+			return true;
+		}
+		int major = Integer.parseInt(m.group(1));
+		int minor = Integer.parseInt(m.group(2));
+		// Calendar versions (>= year 2026) and any 1.12+ release are modern.
+		return major > 1 || (major == 1 && minor >= 12);
+	}
 	
 	public static boolean isPlayer(CommandSender s){
 		return s instanceof Player;

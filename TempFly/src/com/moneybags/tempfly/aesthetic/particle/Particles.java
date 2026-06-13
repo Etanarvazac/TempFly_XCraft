@@ -33,15 +33,9 @@ public class Particles {
 	}
 	
 	public static boolean oldParticles() {
-		String version = Bukkit.getBukkitVersion(); // Obtain the current version number
-		String[] parts = version.split(".");
-		try {
-			int major = Integer.parseInt(parts[0]);
-			int minor = Integer.parseInt(parts[1]);
-			return major == 1 && minor <= 12;
-		} catch (Exception e) {
-			return true;
-		}
+		// Modern servers (1.13+ / calendar versions) use the spawnParticle API;
+		// only pre-1.13 needs the legacy Effect-based path.
+		return !com.moneybags.tempfly.util.U.isModernServer();
 	}
 	
 	public static void play(Location loc, String s) {

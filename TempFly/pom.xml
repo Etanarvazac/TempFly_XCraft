@@ -3,53 +3,18 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>EtanXC</groupId>
     <artifactId>TempFly</artifactId>
-    <version>3.2.0</version>
+    <version>3.2.1</version>
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <configuration>
                     <source>21</source>
                     <target>21</target>
                 </configuration>
             </plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.5.0</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<shadedClassifierName>shaded</shadedClassifierName>
-							<relocations>
-								<relocation>
-									<pattern>org.sqlite</pattern>
-									<shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
-								</relocation>
-                                <relocation>
-                                    <pattern>com.mongodb</pattern>
-                                    <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.mongodb</pattern>
-                                    <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.bson</pattern>
-                                    <shadedPattern>com.moneybags.tempfly.libs.bson</shadedPattern>
-                                </relocation>
-							</relocations>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
         </plugins>
         <resources>
             <resource>
@@ -57,6 +22,91 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <!-- LITE profile: Only bStats shaded, MongoDB/SQLite excluded -->
+        <profile>
+            <id>lite</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <artifactSet>
+                                        <includes>
+                                            <include>org.bstats:bstats-bukkit</include>
+                                        </includes>
+                                    </artifactSet>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>org.bstats</pattern>
+                                            <shadedPattern>com.moneybags.tempfly.libs.bstats</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- SHADED profile: Everything shaded (default) -->
+        <profile>
+            <id>shaded</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>shaded</shadedClassifierName>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>org.sqlite</pattern>
+                                            <shadedPattern>com.moneybags.tempfly.libs.sqlite</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>com.mongodb</pattern>
+                                            <shadedPattern>com.moneybags.tempfly.libs.mongodb</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>org.bson</pattern>
+                                            <shadedPattern>com.moneybags.tempfly.libs.bson</shadedPattern>
+                                        </relocation>
+                                        <relocation>
+                                            <pattern>org.bstats</pattern>
+                                            <shadedPattern>com.moneybags.tempfly.libs.bstats</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <repositories>
 	<repository>
@@ -87,6 +137,12 @@
         <repository>
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+
+        <!-- Hook Repositories -->
+        <repository>
+            <id>factionsuuid</id>
+            <url>https://ci.ender.zone/plugin/repository/everything/</url>
         </repository>
     </repositories>
 
@@ -140,12 +196,27 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Placeholders -->
+        <!-- Others -->
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
             <version>2.11.6</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>3.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Hooks (Optional Dependencies) -->
+        <dependency>
+            <groupId>com.massivecraft</groupId>
+            <artifactId>Factions</artifactId>
+            <version>1.6.9.5-U0.6.8</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 </project>

@@ -23,7 +23,6 @@ import com.moneybags.tempfly.gui.GuiManager;
 import com.moneybags.tempfly.gui.pages.PageShop;
 import com.moneybags.tempfly.gui.pages.PageTrails;
 import com.moneybags.tempfly.hook.HookManager;
-import com.moneybags.tempfly.hook.TempFlyHook;
 import com.moneybags.tempfly.time.TimeManager;
 import com.moneybags.tempfly.util.AutoSave;
 import com.moneybags.tempfly.util.Console;
@@ -99,25 +98,42 @@ public class TempFly extends JavaPlugin {
 		initializeGui();
 		initializeAesthetics();
 
-		
+		// bStats Metrics
 		try {
-			Metrics metrics = new Metrics(this, 8196);
-			// Hooks
-	        metrics.addCustomChart(new Metrics.DrilldownPie("gamemode_hooks", () -> {
-	            Map<String, Map<String, Integer>> map = new HashMap<>();
-	            Map<String, Integer> entry = new HashMap<>();
-	            
-	            for (TempFlyHook hook: hooks.getEnabled()) {
-	            	entry.put(hook.getHookedPlugin(), 1);
-	            	map.put(hook.getHookedPlugin(), entry);
-	            }
-	            if (map.size() == 0) {
-	            	entry.put("No Hooks", 1);
-	            	map.put("No Hooks", entry);
-	            }
-	            return map;
-	        }));
-		} catch (Exception e) {e.printStackTrace();}
+			int pluginId = 29194; // This TempFly branch's bstats ID
+			Class<?> metricsClass = Class.forName("com.moneybags.tempfly.Metrics");
+			Object metrics = metricsClass.getConstructor(org.bukkit.plugin.Plugin.class, int.class).newInstance(this, pluginId);
+			
+			// Create MultiLineChart via reflection
+			Class<?> multiLineChartClass = Class.forName("com.moneybags.tempfly.Metrics$MultiLineChart");
+			Class<?> callableClass = Class.forName("java.util.concurrent.Callable");
+			
+			// Create callable lambda that returns the map
+			Object callable = java.lang.reflect.Proxy.newProxyInstance(
+				getClassLoader(),
+				new Class<?>[] { callableClass },
+				(proxy, method, args) -> {
+					if (method.getName().equals("call")) {
+						Map<String, Integer> map = new HashMap<>();
+						map.put("servers", 1);
+						map.put("players", Bukkit.getOnlinePlayers().size());
+						return map;
+					}
+					return null;
+				}
+			);
+			
+			// Create MultiLineChart instance
+			Object chart = multiLineChartClass.getConstructor(String.class, callableClass).newInstance("players_and_servers", callable);
+			
+			// Call addCustomChart
+			java.lang.reflect.Method addChartMethod = metricsClass.getMethod("addCustomChart", Class.forName("com.moneybags.tempfly.Metrics$CustomChart"));
+			addChartMethod.invoke(metrics, chart);
+		} catch (ClassNotFoundException e) {
+			// bStats not available (LITE version), skip silently
+		} catch (Exception e) {
+			Console.warn("Could not initialize bStats metrics: " + e.getMessage());
+		}
 		
 		autosave = new AutoSave(bridge).runTaskTimerAsynchronously(this, V.save * 20 * 60, V.save * 20 * 60);
 		

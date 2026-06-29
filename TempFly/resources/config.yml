@@ -7,7 +7,7 @@
 #|                   `--'   `----'`--`--`--'|  |-' `--'    `--'.-'  /                   |# 
 #|                                          `--'               `---'                    |#
 #|                                                                                      |#
-#|                                  Version: 3.2.0                                      |#
+#|                                  Version: 3.2.1                                      |#
 #|                                                                                      |#
 ##--------------------------------------------------------------------------------------##
 #|                                                                                      |#
@@ -46,8 +46,8 @@ system:
   #   ** DO NOT CHANGE THESE VALUES! **
   #   These are used internally to ensure your config and lang files are up to date.
   file_versions:
-    conf: 3.2.0
-    lang: 3.2.0
+    conf: 3.2.1
+    lang: 3.2.1
   # Time in minutes to backup data
   backup: 5
   # If true your console will be subjected to spam from the internal workings of the plugin.
@@ -222,6 +222,40 @@ general:
     attacked_by_mob: false
     # attacks themself
     self_inflicted: false
+
+    # ===== COMING SOON =====
+    # ==== v3.2.1 Beta 2 ====
+    # This section provides various protections to prevent players from weaponizing
+    #   TempFly prior to entering combat.
+    protections:
+      # Players must be outside PvP-disabled regions for X seconds before damage is
+      #   permitted. This should help stop attackers from waiting mid-air for their
+      #   target to leave a PvP-disabled region before attacking them.
+      claims:
+        enabled: true
+        # How long both players must be outside of PvP-disabled regions before damage is permitted.
+        seconds: 60
+        # If the attacker tries to attack their target before the either timer
+        #   expires, should TempFly "attack back"?
+        reversal_mode:
+          enabled: false
+          # Should we announce the reversal to just the attacker (false) or embarass them to the
+          #   whole server (true)? Messages are configurable in lang.yml
+          announcement: false
+          # penalty - Remove some of the attacker's fly time
+          #   repay - Remove some of the attacker's fly time and give it to the target
+          # reverse - True reversal, the attacker will take the damage instead of the target
+          #  custom - Run your own command(s) when reversal occurs.
+          method: repay
+          # How much time (in seconds) should be taken from the attacker's fly time. This value
+          #   will also be used for how much time is taken from attacker to be given to the target.
+          penalty_cost: 180
+          custom_methods:
+            - 'minecraft:effect give {attacker} minecraft:poison 5 1'
+            - 'minecraft:clear {attacker} {weapon}'
+          # Repeat multiplier - If attacker continues, multiply effect by number of offenses.
+          #   e.g.: If attacker strikes 3 times during the cooldown, effect will be multiplied by 3
+          multiplier: true
 
     # Seconds before flight can be enabled after pvp 
     pvp_tag: 10

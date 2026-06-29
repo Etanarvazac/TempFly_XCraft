@@ -14,10 +14,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
 
 public class U {
 
 	private static final Pattern LOCATION_STRING_PATTERN = Pattern.compile("~");
+	private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("&#([0-9a-fA-F]{6})");
 	private static final String PREFIX = "{PREFIX}";
 
 	public static void command(String s) {
@@ -60,7 +62,16 @@ public class U {
 	}
 	
 	public static String cc(String m) {
-		return ChatColor.translateAlternateColorCodes('&', Strings.nullToEmpty(m));
+		String input = Strings.nullToEmpty(m);
+		Matcher matcher = HEX_COLOR_PATTERN.matcher(input);
+		StringBuffer hexConverted = new StringBuffer();
+		while (matcher.find()) {
+			String hex = matcher.group(1);
+			String replacement = "&x&" + String.join("&", hex.split(""));
+			matcher.appendReplacement(hexConverted, Matcher.quoteReplacement(replacement));
+		}
+		matcher.appendTail(hexConverted);
+		return ChatColor.translateAlternateColorCodes('&', hexConverted.toString());
 	}
 	
 	public static String strip(String m) {

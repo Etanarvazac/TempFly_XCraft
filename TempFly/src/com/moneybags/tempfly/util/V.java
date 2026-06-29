@@ -144,7 +144,10 @@ public class V {
 	// Other
 	vaultPermsRequired,
 	displaySelfSuccess,
-	displayOtherSuccess;
+	displayOtherSuccess,
+
+	// Combat Protection
+	combatProtectionClaimMethod;
 
 	public static boolean
 	permaTimer,
@@ -172,6 +175,11 @@ public class V {
 	damageWorld,
 	damageRegion,
 	damageStruct,
+	// Combat Protection
+	combatProtectionClaimEnabled,
+	combatProtectionClaimReversal,
+	combatProtectionClaimReversalAnnouncement,
+	combatProtectionClaimReversalMultiplier,
 	
 	infiniteDisablePayment,
 	infiniteDisableBonus,
@@ -199,7 +207,10 @@ public class V {
 	combatTagPvp,
 	combatTagPve,
 	maxY,
-	decayThresh;
+	decayThresh,
+	// Combat Protection
+	combatProtectionClaimCooldown,
+	combatProtectionClaimReversalPenalty;
 	
 	public static double
 	maxTimeBase,
@@ -212,7 +223,8 @@ public class V {
 	helpExtended,
 	disabledWorlds,
 	disabledRegions,
-	overrideFlightPermissions;
+	overrideFlightPermissions,
+	combatProtectionClaimReversalCommands;
 	
 	public static List<Long> 
 	warningTimes;
@@ -348,6 +360,16 @@ public class V {
 		trailRemovedOther	= st(C.LANG, "aesthetic.trail.removed_other");
 		trailSetSelf		= st(C.LANG, "aesthetic.trail.set_self");
 		trailSetOther		= st(C.LANG, "aesthetic.trail.set_other");
+
+		// Combat Protection
+		combatProtectionClaimEnabled = config.getBoolean("general.combat.protections.claims.enabled");
+		combatProtectionClaimReversal = config.getBoolean("general.combat.protections.claims.reversal_mode.enabled");
+		combatProtectionClaimReversalAnnouncement = config.getBoolean("general.combat.protections.claims.reversal_mode.announcement");
+		combatProtectionClaimReversalMultiplier = config.getBoolean("general.combat.protections.claims.reversal_mode.multiplier");
+		combatProtectionClaimCooldown = config.getInt("general.combat.protections.claims.seconds");
+		combatProtectionClaimReversalPenalty = config.getInt("general.combat.protections.claims.reversal_mode.penalty_cost");
+		combatProtectionClaimMethod = st(C.CONFIG, "general.combat.protections.claims.reversal_mode.method");
+		combatProtectionClaimReversalCommands = config.getStringList("general.combat.protections.claims.reversal_mode.custom_methods");
 		
 		List<String> h 		= Files.lang.getStringList("system.help");
 		if (h != null) {

@@ -206,6 +206,7 @@ public class HookManager implements Reloadable {
 	 * Represents the GameMode type of a hook  
 	 */
 	public static enum Genre {
+		FACTIONS("Factions"),
 		LANDS("Lands"),
 		OTHER("Other");
 		

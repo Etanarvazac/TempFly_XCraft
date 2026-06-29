@@ -1,8 +1,10 @@
 package com.moneybags.tempfly.command.player;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -10,14 +12,11 @@ import org.bukkit.entity.Player;
 
 import com.moneybags.tempfly.TempFly;
 import com.moneybags.tempfly.command.TempFlyCommand;
-import com.moneybags.tempfly.util.data.DataPointer;
-import com.moneybags.tempfly.util.data.DataBridge.DataValue;
 import com.moneybags.tempfly.util.Console;
 import com.moneybags.tempfly.util.U;
 import com.moneybags.tempfly.util.V;
-
-import java.util.UUID;
-import java.sql.SQLException;
+import com.moneybags.tempfly.util.data.DataBridge.DataValue;
+import com.moneybags.tempfly.util.data.DataPointer;
 
 public class CmdDisplay extends TempFlyCommand {
   public CmdDisplay(TempFly tempfly, String[] args) {
@@ -77,6 +76,11 @@ public class CmdDisplay extends TempFlyCommand {
         } catch (SQLException e) {
           U.m(s, V.sqlErrorPointer);
           return;
+        }
+        // Before running check, let's include a failsafe in the event this is null. This check will
+        // use TempFly's default setting for Display State (true) as the fallback.ound
+        if (current == null) {
+          current = true;
         }
         newState = !current;
         Console.debug("TF--| CmdDisplay: Toggling self display state to " + newState);

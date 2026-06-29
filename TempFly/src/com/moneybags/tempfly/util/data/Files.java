@@ -5,10 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.StandardCopyOption;
 import java.io.OutputStream;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -115,6 +116,15 @@ public class Files {
 			if (currentLang == null || !currentLang.equals(expectedLang)) {
 				Console.info("--------- Lang File Update -----------");
 				backupAndUpdate(plugin, "lang.yml", currentLang, expectedLang);
+				// Update the config file with the new lang version
+				diskConfig.set("system.file_versions.lang", expectedLang);
+				try {
+					diskConfig.save(configf);
+					Console.info("Updated system.file_versions.lang to " + expectedLang + " in config.yml");
+				} catch (Exception e) {
+					Console.warn("Failed to update system.file_versions.lang in config.yml");
+					e.printStackTrace();
+				}
 				Console.info("--------- End Lang File Update -----------");
 			}
 		}
@@ -252,62 +262,82 @@ public class Files {
 	// Helper #3: Now let's get the line with the server's value for the given key
 	private static String findValueInLines(List<String> lines, String fullPath, String key, String newLine) {
 		int targetIndent = getIndentLevel(newLine);
+		String[] pathParts = fullPath.split("\\.");
 		Console.debug("Looking for key '" + key + "' (path: " + fullPath + ") at indent level " + targetIndent);
 
-		// Build the parent path by removing the last key
-		String[] pathParts = fullPath.split("\\.");
-		List<String> parentKeys = new ArrayList<>();
-		for (int i = 0; i < pathParts.length - 1; i++) {
-			parentKeys.add(pathParts[i]);
+		// Build expected parent indents
+		List<String> pathStack = new ArrayList<>();
+		for (String part : pathParts) {
+			pathStack.add(part);
 		}
+		pathStack.remove(pathStack.size() - 1); // Remove the key itself, we just need parents
 
-		// Search for the value, but ensure we're in the right parent context
-		boolean inCorrectContext = parentKeys.isEmpty(); // If no parent, we're always in context
-		int currentContextDepth = 0;
+		// Track our current position in the YAML hierarchy
+		List<String> currentStack = new ArrayList<>();
 		
-		for (String line : lines) {
+		for (int lineIdx = 0; lineIdx < lines.size(); lineIdx++) {
+			String line = lines.get(lineIdx);
 			String lineTrimmed = line.trim();
 			int lineIndent = getIndentLevel(line);
 			
-			// Track context by matching parent keys
-			if (!parentKeys.isEmpty()) {
-				int expectedParentIndent = currentContextDepth * 2;
-				if (lineIndent == expectedParentIndent && currentContextDepth < parentKeys.size()) {
-					String lineKey = extractKey(line);
-					if (lineKey != null && lineKey.equals(parentKeys.get(currentContextDepth))) {
-						currentContextDepth++;
-						if (currentContextDepth == parentKeys.size()) {
-							inCorrectContext = true;
+			// Skip comments and empty lines
+			if (lineTrimmed.startsWith("#") || lineTrimmed.isEmpty()) {
+				continue;
+			}
+			
+			// Adjust current stack based on indentation
+			while (!currentStack.isEmpty() && lineIndent <= (currentStack.size() - 1) * 2) {
+				currentStack.remove(currentStack.size() - 1);
+			}
+			
+			// Extract the key from this line
+			String lineKey = extractKey(line);
+			if (lineKey == null) {
+				continue;
+			}
+			
+			// Add to stack if this is a parent (ends with : and has nothing after)
+			if (lineTrimmed.endsWith(":") && !lineTrimmed.contains(": ")) {
+				if (lineIndent == currentStack.size() * 2) {
+					currentStack.add(lineKey);
+				}
+			} else if (lineIndent == currentStack.size() * 2) {
+				// This is a value at the current depth
+				// Check if current stack matches our expected path parents
+				boolean stackMatches = true;
+				if (currentStack.size() != pathStack.size()) {
+					stackMatches = false;
+				} else {
+					for (int i = 0; i < currentStack.size(); i++) {
+						if (!currentStack.get(i).equals(pathStack.get(i))) {
+							stackMatches = false;
+							break;
 						}
 					}
 				}
-				// Reset context if we go back to a lower indent
-				if (lineIndent < currentContextDepth * 2) {
-					currentContextDepth = lineIndent / 2;
-					inCorrectContext = (currentContextDepth >= parentKeys.size());
+				
+				// If this is our target key and the stack matches, we found it
+				if (stackMatches && lineKey.equals(key)) {
+					Console.debug("Found matching line at correct path: " + lineTrimmed);
+					int colonIndex = lineTrimmed.indexOf(':');
+					if (colonIndex == -1) {
+						Console.debug("No colon found in line");
+						return null;
+					}
+					
+					String oldValue = lineTrimmed.substring(colonIndex + 1).trim();
+					Console.debug("Extracted old value: '" + oldValue + "'");
+					
+					// Rebuild the line with proper indentation
+					String indent = " ".repeat(targetIndent);
+					String result = indent + key + ": " + oldValue;
+					Console.debug("Rebuilt line: " + result);
+					return result;
 				}
-			}
-			
-			// Now look for our target key in the correct context
-			if (inCorrectContext && lineIndent == targetIndent && lineTrimmed.startsWith(key + ":")) {
-				Console.debug("Found matching line in correct context: " + lineTrimmed);
-				int colonIndex = lineTrimmed.indexOf(':');
-				if (colonIndex == -1) {
-					Console.debug("No colon found, returning null");
-					return null;
-				}
-
-				String oldValue = lineTrimmed.substring(colonIndex + 1).trim();
-				Console.debug("Extracted old value: '" + oldValue + "'");
-
-				// Rebuild the line with proper indentation
-				String indent = " ".repeat(targetIndent);
-				String result = indent + key + ": " + oldValue;
-				Console.debug("Rebuilt line: " + result);
-				return result;
 			}
 		}
-		Console.debug("Key '" + key + "' not found in correct context");
+		
+		Console.debug("Key '" + key + "' not found at path: " + fullPath);
 		return null;
 	}
 	

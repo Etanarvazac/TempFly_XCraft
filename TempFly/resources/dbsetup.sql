@@ -17,3 +17,8 @@ CREATE TABLE IF NOT EXISTS tempfly_data
     PRIMARY KEY (uuid)
 );
 
+-- Add columns that may be missing in existing tables (for upgrades)
+-- Schema validation is performed in the handlers to check column existence before execution
+ALTER TABLE tempfly_data ADD COLUMN infinite_first_use BOOLEAN DEFAULT 1;
+ALTER TABLE tempfly_data ADD COLUMN display_visible BOOLEAN DEFAULT 1;
+

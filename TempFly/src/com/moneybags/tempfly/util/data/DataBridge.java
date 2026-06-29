@@ -174,6 +174,21 @@ public class DataBridge implements DataFileHolder {
 		}
 	}
 	
+	/**
+	 * Check if a column exists in MySQL table.
+	 * @param columnName The column name to check
+	 * @return true if column exists, false otherwise
+	 * @throws SQLException If query fails
+	 */
+	private boolean mysqlColumnExists(String columnName) throws SQLException {
+		String query = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='tempfly_data' AND COLUMN_NAME='" + columnName + "'";
+		try (Connection conn = dataSource.getConnection();
+		     PreparedStatement stmt = conn.prepareStatement(query)) {
+			ResultSet rs = stmt.executeQuery();
+			return rs.next();
+		}
+	}
+
 	private void initMySqlDb() throws SQLException {
 	    String setup;
 	    try (InputStream in = tempfly.getResource("dbsetup.sql")) {
@@ -186,10 +201,35 @@ public class DataBridge implements DataFileHolder {
 	    String[] queries = setup.split(";");
 	    for (String query : queries) {
 	        if (query.isBlank()) continue;
+	        
+	        // Handle ALTER TABLE statements with schema validation
+	        if (query.trim().toUpperCase().startsWith("ALTER TABLE")) {
+	        	try {
+	        		// Extract column name from ALTER TABLE ADD COLUMN statement
+	        		// Format: ALTER TABLE table_name ADD COLUMN column_name ...
+	        		String[] parts = query.trim().split("\\s+");
+	        		if (parts.length >= 6 && "ADD".equalsIgnoreCase(parts[3]) && "COLUMN".equalsIgnoreCase(parts[4])) {
+	        			String columnName = parts[5];
+	        			if (mysqlColumnExists(columnName)) {
+	        				continue;
+	        			}
+	        		}
+	        	} catch (SQLException e) {
+	        		Console.warn("Could not verify column existence: " + e.getMessage());
+	        	}
+	        }
+	        
 	        try (Connection conn = dataSource.getConnection();
 	             PreparedStatement stmt = conn.prepareStatement(query)) {
 	            stmt.execute();
-	        } 
+	        } catch (SQLException e) {
+	        	// For ALTER TABLE, log as info since it might be expected to fail if column exists
+	        	if (query.trim().toUpperCase().startsWith("ALTER TABLE")) {
+	        		Console.info("MySQL migration skipped (column may already exist): " + e.getMessage());
+	        	} else {
+	        		throw e; // Rethrow for non-ALTER statements
+	        	}
+	        }
 	    }
 	    Console.info("MySQL setup complete.");
 	}

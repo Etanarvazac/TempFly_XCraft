@@ -97,6 +97,16 @@ general:
     infinite_disabled: "{PREFIX} &cYou disabled your infinite flight!"
     bypass_enabled: "{PREFIX} &aYou enabled flight bypass mode!"
     bypass_disabled: "{PREFIX} &cYou disabled flight bypass mode!"
+  
+  protections:
+    claims:
+      early_attack: "{PREFIX} &cYou or your target are currently combat protected by a claim."
+      early_defense: "{PREFIX} &cYou or your attacker are currently combat protected by a claim."
+      reversal_announce: "{PREFIX} &f{PLAYER} &cthought it was a good idea to weaponize their fly time while camping outside claims for PvP strikes!"
+      reversal_penalty: "{PREFIX} &cYou have lost some of your fly time for attempting to attack a player too soon after either of you left a claim!"
+      reversal_repay: "{PREFIX} &cYou have donated some of your fly time to your target for attempting to attack them too soon after either of you left a claim!"
+      reversal_reverse: "{PREFIX} &cYou attacked yourself instead of your target because you attempted to attack them too soon after either of you left a claim!"
+      reversal_warning: "{PREFIX} &cPlease do not weaponize your fly time on this server."
 
   requirement:
     fail:

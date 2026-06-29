@@ -13,7 +13,11 @@ public class TitleAPI {
 	private static Title title;
 	
     public static void initialize(TempFly tempfly) {
-    	  if (Bukkit.getServer().getVersion().matches(".*1\\.(?!10|11)\\d{2,}.*")) {
+        // First, let's grab the server's version
+        String version = Bukkit.getServer().getVersion();
+
+        // Now let's check if we should use the legacy or modern title
+    	  if (version.matches(".*(?<!1\\.)[2-9][0-9]\\.[0-9].*") || version.matches(".*1\\.(?!10|11)\\d{2,}.*")) {
     	      title = new ModernTitle();
         } else {
     	      title = new LegacyTitle();

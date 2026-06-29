@@ -111,7 +111,7 @@ public class FlightUser {
 		@Override
 		public void run() {
 			if (logged && (hasInfiniteFlight() || time > 0) && V.autoFly) {
-				Console.debug("--| Player is flight logged");
+				Console.debug("--| Player is flight logged with infinite and time above 0 with automatic flight");
 				if (!enableFlight()) {
 					sendRequirementMessage();
 					enforce(1);
@@ -139,7 +139,7 @@ public class FlightUser {
 	}
 	
 	public void save() {
-		Console.debug("", "-----< Save FlightUser: (" + p.getUniqueId().toString() + ") >-----");
+		Console.debug("", "--| Save FlightUser: (" + p.getUniqueId().toString() + ")");
 		DataBridge bridge = manager.getTempFly().getDataBridge();
 		String u = p.getUniqueId().toString();
 		bridge.manualCommit(
@@ -327,7 +327,7 @@ public class FlightUser {
 	 * @param delay The delay in ticks to enforce removal of flight. 1 should suffice.
 	 */
 	public void enforce(int delay) {
-		Console.debug("enforcing disabled flight");
+		Console.debug("--| Enforcing disabled flight");
 		if (enforceTask != null) {
 			enforceTask.cancel();
 		}
@@ -350,11 +350,11 @@ public class FlightUser {
 			if (enabled) return;
 			GameMode m = p.getGameMode();
 			if (m == GameMode.CREATIVE && V.creativeTimer) {
-				Console.debug("--- Enforcing disabled flight A ----");
+				Console.debug("--| Enforcing disabled flight A");
 				p.setFlying(false);
 				p.setAllowFlight(false);
 			} else if (m != GameMode.CREATIVE && m != GameMode.SPECTATOR) {
-				Console.debug("--- Enforcing disabled flight B ----");
+				Console.debug("--| Enforcing disabled flight B");
 				p.setFlying(false);
 				p.setAllowFlight(false);
 			}
@@ -368,7 +368,7 @@ public class FlightUser {
 	 * @param delay The delay in ticks to enforce removal of flight. 1 should suffice. -1 for no enforcement
 	 */
 	public void disableFlight(int delay, boolean fallSafely) {
-		Console.debug("------ disable flight -------");
+		Console.debug("--| Disable Flight");
 		if (!enabled) {return;}
 		enabled = false;
 		//TODO 
@@ -400,7 +400,7 @@ public class FlightUser {
 	 */
 	@SuppressWarnings("deprecation")
 	public boolean enableFlight() {
-		Console.debug("------ enable flight -------");
+		Console.debug("--| Enable Flight");
 		if (hasFlightRequirements() && !hasRequirementBypass()) {
 			setAutoFly(true);
 			return false;
@@ -409,7 +409,7 @@ public class FlightUser {
 			setAutoFly(true);
 			return false;
 		}
-		Console.debug("--> set flying true");
+		Console.debug("--| Set flying to true");
 		enabled = true;
 		p.setAllowFlight(true);
 		p.setFlying(!p.isOnGround());
@@ -424,13 +424,20 @@ public class FlightUser {
 	 * Method to make sure a player can fly when they are supposed to.
 	 */
 	public void applyFlightCorrect(boolean wasFlying) {
-		Console.debug("------ apply flight correct -------");
+		Console.debug("--| Apply Flight Correction");
 		Bukkit.getScheduler().runTaskLater(manager.getTempFly(), () -> {
 			if (p.isOnline() && hasFlightEnabled()) {
+				// Check if player still has flight time remaining
+				if (time <= 0 && !hasInfiniteFlight()) {
+					Console.debug("--| Disabling flight (no time remaining)");
+					disableFlight(0, !V.damageTime);
+					return;
+				}
 				p.setAllowFlight(true);
 				// We want to restore fly state if provided by FlightManager. If we
 				// don't get one, default to true.
 				p.setFlying(wasFlying);
+				Console.debug("--| Correction completed.");
 			}
 		}, 1);
 	}
@@ -462,7 +469,7 @@ public class FlightUser {
 	}
 	
 	public void submitFlightRequirement(RequirementProvider requirement, FlightResult failedResult) {
-		if (V.debug) {Console.debug("", "---- Submitting failed requirement to user (" + p.getName() + ") ----", "--| Requirement: " + requirement.getClass().toGenericString(), "--| Requirements: " + requirements);}
+		if (V.debug) {Console.debug("", "--| Submitting failed requirement to user (" + p.getName() + ") ", "|--| Requirement: " + requirement.getClass().toGenericString(), " |--| Requirements: " + requirements);}
 		Map<InquiryType, FlightResult> types = requirements.getOrDefault(requirement, new HashMap<>());
 		InquiryType type = failedResult.getInquiryType();
 		if (types.containsKey(type)) {
@@ -482,7 +489,7 @@ public class FlightUser {
 	 * @return true if there are no more requirements
 	 */
 	public boolean removeFlightRequirement(RequirementProvider requirement, InquiryType type) {
-		if (V.debug) {Console.debug("", "---- Removing flight requirement from user ----", "--| Requirement: " + requirement.getClass().toGenericString(), "--| Requirements: " + requirements);}
+		if (V.debug) {Console.debug("", "--| Removing flight requirement from user ", "|--| Requirement: " + requirement.getClass().toGenericString(), " |--| Requirements: " + requirements);}
 		Map<InquiryType, FlightResult> types = requirements.getOrDefault(requirement, new HashMap<>());
 		types.remove(type);
 		if (types.size() == 0) {
@@ -646,8 +653,8 @@ public class FlightUser {
 	 * @return True if there are no more requirements.
 	 */
 	public boolean updateRequirements(String enableMessage) {
-		Console.debug("", "--- updating requirements ---", "--| requirements: " + requirements.toString(),
-				"--| flight enabled: " + enabled, "--| auto flight: " + autoEnable, "--| time: " + time);
+		Console.debug("", "--| Updating requirements ", "|--| Requirements: " + requirements.toString(),
+				"--| Flight enabled: " + enabled, "|--| Auto flight: " + autoEnable, "|--| Time: " + time);
 		
 		if (requirements.size() == 0 && !hasFlightEnabled() && (time > 0 || hasInfiniteFlight())) {
 			if (hasAutoFlyQueued()) {
@@ -772,6 +779,7 @@ public class FlightUser {
 	}
 	
 	public void doActionBar() {
+		Console.debug("--| doActionBar() called.");
 		try {
 			Boolean isVisible = (Boolean) manager.getTempFly().getDataBridge().getValue(
 					DataPointer.of(DataValue.PLAYER_DISPLAY_VISIBLE, p.getUniqueId().toString())
@@ -791,6 +799,7 @@ public class FlightUser {
 			U.m(p, V.sqlErrorPointer);
 			return;
 		}
+		Console.debug("--| Sending action bar to user.");
 		ActionBarAPI.sendActionBar(p, timeManager.regexString(V.actionText, getTime()));
 	}
 	
@@ -830,7 +839,7 @@ public class FlightUser {
 		
 		final float val = maxSpeed / 10;
 		final float def = manager.getFlightEnvironment().getDefaultSpeed() / 10;
-		Console.debug("--| final speed value: " + val);
+		Console.debug("--| Final speed value: " + val);
 		if (p.getFlySpeed() > val
 				|| (p.getFlySpeed() != val && !manager.getFlightEnvironment().allowSpeedPreference()) 
 				|| (p.getFlySpeed() < val && hasSpeedPreference())) {
@@ -838,8 +847,8 @@ public class FlightUser {
 			Bukkit.getScheduler().runTaskLater(manager.getTempFly(), () -> {
 				Console.debug("-----> | changing player speed");
 				if (p.isOnline()) {
-					Console.debug("player speed: " + p.getFlySpeed(), "value: " + val);
-					Console.debug("is speed prefernce allowed? " + manager.getFlightEnvironment().allowSpeedPreference(),
+					Console.debug("--| Player speed: " + p.getFlySpeed(), "value: " + val);
+					Console.debug("--| Is speed prefernce allowed? " + manager.getFlightEnvironment().allowSpeedPreference(),
 							p.getFlySpeed() != val && !manager.getFlightEnvironment().allowSpeedPreference());
 					if (p.getFlySpeed() > val && message) {
 						U.m(p, V.flySpeedLimitSelf.replaceAll("\\{SPEED}", new DecimalFormat("#.##").format(val * 10)));
@@ -863,50 +872,58 @@ public class FlightUser {
 	}
 	
 	public float getMaxSpeed() {
-		Console.debug("get max speed 1");
+		Console.debug("--| Get max speed (general)");
 		CompatRegion[] regions = environment.getCurrentRegionSet();
 		FlightEnvironment env = manager.getFlightEnvironment();
 		
 		// Permissions for region speed take priority
 		float finSpeed = getMaxSpeed(regions);
 		if (finSpeed != -999) {
-			Console.debug("2: " + finSpeed);
+			Console.debug("--| 2: " + finSpeed);
 			return finSpeed;
 		} else if (env.hasMaxSpeed(regions)) {
-			Console.debug("4: " + env.getMaxSpeed(regions));
+			Console.debug("--| 4: " + env.getMaxSpeed(regions));
 			return env.getMaxSpeed(regions);
 		}
 		
 		// Permissions for world speed go next
 		finSpeed = getMaxSpeed(p.getWorld());
 		if (finSpeed != -999) {
-			Console.debug("3: " + finSpeed);
+			Console.debug("--| 3: " + finSpeed);
 			return finSpeed;
 		} else if (env.hasMaxSpeed(p.getWorld())) {
-			Console.debug("4: " + env.getMaxSpeed(p.getWorld()));
+			Console.debug("--| 4: " + env.getMaxSpeed(p.getWorld()));
 			return env.getMaxSpeed(p.getWorld());
 		}
 		
 		// return default environment speed indicator
-		Console.debug("5: " + env.getDefaultSpeed());
+		Console.debug("--| 5: " + env.getDefaultSpeed());
 		return env.getDefaultSpeed();
 	}
 	
 	public float getMaxSpeed(World world) {
+		Console.debug("--| Get max speed (world)");
 		return this.calculatePermissionSpeed("world." + world.getName(), "world.*");
 	}
 	
 	public float getMaxSpeed(CompatRegion[] regions) {
+		Console.debug("--| Get max speed (region)");
 		float permSpeed = -999;
 		for (CompatRegion region: regions) {
 			permSpeed = Math.max(calculatePermissionSpeed("region." + region.getId(), "region.*"), permSpeed);
-			Console.debug("--| Region: " + region.getId(), "--| Permission speed for this region is: " + permSpeed);
+			Console.debug("--| Region: " + region.getId(), " |--| Permission speed for this region is: " + permSpeed);
 		}
 		return permSpeed;
 	}
 	
 	private float calculatePermissionSpeed(String permission, String wildcard) {
-		Console.debug("calc perm speed : " + permission);
+		Console.debug("--| Calc perm speed : " + permission);
+
+		// Check if player can bypass limit
+		if (p.isOp() || hasRequirementBypass()) {
+			Console.debug("--| Player has bypass permission. No speed limit enforced.");
+			return -999;
+		}
 		float maxBase = -999;
 		
 		float maxFound = 0;
@@ -914,10 +931,10 @@ public class FlightUser {
 			String perm = info.getPermission();
 			if (perm.startsWith("tempfly.speed." + permission)
 					|| perm.startsWith("tempfly.speed." + wildcard)) {
-				Console.debug("found: " + perm);
+				Console.debug("--| Found: " + perm);
 				String[] split = perm.split("\\.");
 				if (split.length < 5) {
-					Console.debug("less than 5");
+					Console.debug("--| Less than 5");
 					continue;
 				}
 				String num = split[4];
@@ -935,7 +952,7 @@ public class FlightUser {
 		if (maxFound > 0) {
 			maxBase = maxFound;
 		}
-		Console.debug("maxbase: " + maxBase);
+		Console.debug("--| maxbase: " + maxBase);
 		
 		return maxBase;
 	}
@@ -969,7 +986,7 @@ public class FlightUser {
 		private static final int DELAY = 20;
 		
 		public GroundTimer() {
-			Console.debug("--- new ground timer ---");
+			Console.debug("--| New ground timer");
 			this.runTaskTimer(manager.getTempFly(), 1, DELAY);
 		}
 		
@@ -1012,7 +1029,7 @@ public class FlightUser {
 		private boolean previouslyFlying;
 		
 		public FlightTimer() {
-			Console.debug("--- new flight timer--- ");
+			Console.debug("--| New flight timer");
 			this.runTaskTimer(manager.getTempFly(), 0, DELAY);
 		Console.debug("--| Checking ActionBar conditions: doFlightTimer=" + doFlightTimer() + ", V.actionBar=" + V.actionBar + ", hasInfiniteFlight=" + hasInfiniteFlight() + ", time=" + time);
 		if (doFlightTimer() && V.actionBar && !hasInfiniteFlight() && time > 0) {
@@ -1027,15 +1044,17 @@ public class FlightUser {
 			//if (enabled) {p.setAllowFlight(true);}
 			
 			if (hasInfiniteFlight()) {
+				Console.debug("--| Player has infinite flight. No timer needed.");
 				return;
 			}
 			
 			if (!doFlightTimer()) {
+				Console.debug("--| doFlightTimer() was false. No timer needed.");
 				this.cancel();
 				timer = time > 0 ? new GroundTimer() : null;
 				return;
 			}
-			
+
 			executeTimer();
 		}
 		
@@ -1060,40 +1079,46 @@ public class FlightUser {
 					TitleAPI.sendTitle(p, 15, 30, 15, timeManager.regexString(V.warningTitle, time),
 							timeManager.regexString(V.warningSubtitle, time));
 				}
-			Console.debug("--| Checking ActionBar in executeTimer: V.actionBar=" + V.actionBar);
-			if (V.actionBar) {
-				Console.debug("--| Calling doActionBar() from executeTimer");
-				doActionBar();
-			}
+				Console.debug("--| Checking ActionBar in executeTimer(): V.actionBar is currently " + V.actionBar);
+				if (V.actionBar) {
+					doActionBar();
+				}
 			} else if (enabled) {
 				timeExpired();
 			}
 		}
 		
 		private void timeExpired() {
+			Console.debug("--| Time has expired. Disabling flight.");
 			disableFlight(-1, !V.damageTime);
 			U.m(p, V.invalidTimeSelf);
 			autoEnable = true;
 		}
 		
 		private boolean doFlightTimer() {
+			Console.debug("--| doFlightTimer() called. Checking conditions...");
 			if (time <= 0) {
+				timeExpired();
 				return false;
 			}
 			if (V.permaTimer) {
 				return doIdleCheck();
 			}
 			if (p.getGameMode() == GameMode.CREATIVE && !V.creativeTimer) {
+				Console.debug("--| Player is in creative mode.");
 				return false;
 			}
 			if (p.getGameMode() == GameMode.SPECTATOR && !V.spectatorTimer) {
+				Console.debug("--| Player is in spectator mode.");
 				return false;
 			}
 			if (p.getVehicle() != null) {
+				Console.debug("--| Player is in a vehicle.");
 				return false;
 			}
 			if (!p.isFlying()) {
 				if (V.groundTimer && !doIdleCheck()) {
+					Console.debug("--| Player is on the ground and idle check was false.");
 					return false;
 				}
 				return V.groundTimer;
